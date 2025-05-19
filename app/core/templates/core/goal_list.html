@@ -28,10 +28,7 @@
             border-radius: 5px;
             border-left: 4px solid #3498db;
         }
-        .goal-item.completed {
-            border-left-color: #2ecc71;
-            opacity: 0.7;
-        }
+
         .goal-item__completed {
             border-left-color: #2ecc71;
             opacity: 0.7;
@@ -55,11 +52,11 @@
             border-radius: 3px;
             font-size: 0.8em;
         }
-        .status.completed {
+        .status__completed {
             background: #2ecc71;
             color: white;
         }
-        .status.pending {
+        .status__pending {
             background: #f39c12;
             color: white;
         }
@@ -70,7 +67,7 @@
 
     <ul class="goal-list">
         {% for goal in goals %}
-        <li class="goal-item {% if goal.is_completed %}completed{% endif %}"
+        <li class="goal-item {% if goal.is_completed %}goal-item__completed{% endif %}"
         data-goal-id="{{ goal.id }}">
             <div class="goal-title">{{ goal.title }}</div>
             <div class="goal-meta">
@@ -79,7 +76,7 @@
                     | Due: <span class="due-date">{{ goal.due_date|date:"M d, Y" }}</span>
                 {% endif %}
             </div>
-            <span class="status {% if goal.is_completed %}completed{% else %}pending{% endif %}">
+            <span class="status {% if goal.is_completed %}status__completed{% else %}status__pending{% endif %}">
                 {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
             </span>
         </li>
@@ -99,7 +96,13 @@
                     },
                 }).then(response =>response.json()).then(data=>{
                     if (data.success){
-                        this.classList.toggle('goal-item__completed', data.is_completed)
+
+                    this.classList.toggle('goal-item__completed', data.is_completed);
+
+                    // Update status span
+                    const statusSpan = this.querySelector('.status');
+                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
+                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
                 }
                 });
             });
