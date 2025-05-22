@@ -1,4 +1,4 @@
-from django.forms import ModelForm, DateInput
+from django.forms import ModelForm, DateInput, TextInput, Textarea
 from .models import Goal
 
 
@@ -14,4 +14,9 @@ class GoalForm(ModelForm):
                 'autocomplete': 'off',
                 'readonly': 'readonly',
             }),
+            'description': Textarea(attrs={
+                'type': 'text',
+                'autocomplete': 'off',
+                'rows': 3,
+            })
         }

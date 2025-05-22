@@ -62,6 +62,11 @@
             background: #f39c12;
             color: white;
         }
+        .status-group{
+            background: lightgray;
+            font-weight: bolder;
+            margin-right: .5rem;
+        }
 
         /*goal form*/
         .goal-form {
@@ -71,6 +76,28 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 30px;
         }
+            .form-group {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    /* Target all form controls */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100% !important;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+        display: block;
+    }
+
+    /* Specific fix for date input wrapper */
+    .flatpickr-wrapper {
+        width: 100%;
+    }
 
         .form-group {
             margin-bottom: 15px;
@@ -113,6 +140,17 @@
             list-style: none;
             font-size: 0.9em;
         }
+        .btn{
+            text-decoration: none;
+            padding: .3rem .5rem;
+            border-radius: .3rem;
+            margin-top: .5rem;
+            font-size: 0.8rem;
+        }
+        .btn-delete{
+            color: white;
+            background: darkred;
+        }
     </style>
 </head>
 <body>
@@ -125,6 +163,11 @@
                 {{ form.title.label_tag }}
                 {{ form.title }}
                 {{ form.title.errors }}
+            </div>
+            <div class="form-group">
+                {{ form.goal_group.label_tag }}
+                {{ form.goal_group }}
+                {{ form.goal_group.errors }}
             </div>
             <div class="form-group">
                 {{ form.description.label_tag }}
@@ -155,6 +198,10 @@
             <span class="status {% if goal.is_completed %}status__completed{% else %}status__pending{% endif %}">
                 {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
             </span>
+            <span class="status status-group">
+                {{ goal.goal_group }}
+            </span>
+            <a class="btn-delete btn" href="{% url 'core:delete-goal' goal_id=goal.id %}">delete</a>
         </li>
         {% endfor %}
     </ul>

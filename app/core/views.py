@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from .forms import GoalForm
 from .models import Goal
@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
 from .forms import GoalForm
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 
 # Create your views here.
@@ -55,3 +56,10 @@ def toggle_goal_status(request, goal_id):
         "success": False,
     },
         status=400)
+
+
+# @require_POST
+def delete_goal(request, goal_id):
+    goal = get_object_or_404(Goal, pk=goal_id)
+    goal.delete()
+    return redirect('core:goal-list')
