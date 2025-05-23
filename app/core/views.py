@@ -8,6 +8,8 @@ from django.http import JsonResponse, HttpResponseRedirect
 from .forms import GoalForm
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 
 # Create your views here.
@@ -21,13 +23,27 @@ class GoalListView(ListView):
     form_class = GoalForm
     template_name = 'core/goal_list.html'
 
-    def get_queryset(self):
-        return super().get_queryset().order_by('created_at', 'is_completed')
-
     def get_context_data(self, **kwargs):
         context = super(GoalListView, self).get_context_data(**kwargs)
         context['form'] = GoalForm()
+        today = timezone.now().date()
+
+        date_sequence = [today + timedelta(days=i) for i in range(-3, 4)]
+        selected_date = self.request.GET.get('date', today.isoformat())
+
+        context.update({
+            'date_sequence': date_sequence,
+            'selected_date': datetime.strptime(selected_date, '%Y-%m-%d').date(),
+        })
         return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset().order_by('created_at', 'is_completed')
+        selected_date = self.request.GET.get('date')
+
+        if selected_date:
+            return queryset.filter(due_date=selected_date)
+        return queryset
 
     def post(self, request, *args, **kwargs):
         form = GoalForm(request.POST)
@@ -62,4 +78,16 @@ def toggle_goal_status(request, goal_id):
 def delete_goal(request, goal_id):
     goal = get_object_or_404(Goal, pk=goal_id)
     goal.delete()
+    return redirect('core:goal-list')
+
+# todo messege functionalty
+@require_POST
+def snooze_goal(request, goal_id):
+    goal = get_object_or_404(Goal, pk=goal_id)
+    days = int(request.POST.get('days', 1))
+
+    new_date = timezone.now().date() + timezone.timedelta(days=days)
+    goal.due_date = new_date
+    goal.save()
+
     return redirect('core:goal-list')

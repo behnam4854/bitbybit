@@ -151,10 +151,123 @@
             color: white;
             background: darkred;
         }
+        /*data bar*/
+            .date-scroll-container {
+        overflow-x: auto;
+        padding: 20px 0;
+        margin-bottom: 30px;
+    }
+
+    .date-sequence {
+        display: flex;
+        gap: 15px;
+        min-width: max-content;
+    }
+
+    .date-box {
+        text-align: center;
+        padding: 15px 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+        min-width: 70px;
+    }
+
+    .date-box.active {
+        background: #3498db;
+        color: white;
+    }
+
+    .date-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .day {
+        font-size: 0.9em;
+        text-transform: uppercase;
+    }
+
+    .number {
+        font-size: 1.4em;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .month {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .date-box.active .month {
+        color: #e0e0e0;
+    }
+    /*date snoozer*/
+
+    .snooze-container {
+        position: relative;
+        display: inline-block;
+        margin-left: 15px;
+    }
+
+    .snooze-btn {
+        background: #f1c40f;
+        color: #2c3e50;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .snooze-options {
+        display: none;
+        position: absolute;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        padding: 10px;
+        z-index: 100;
+        top: 100%;
+        left: 0;
+    }
+
+    .snooze-options button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .snooze-options button:hover {
+        background: #3498db;
+        color: white;
+    }
+
+    .snooze-container:hover .snooze-options {
+        display: block;
+    }
     </style>
 </head>
 <body>
     <h1>Micro-Goals Tracker</h1>
+    <div class="date-scroll-container">
+        <div class="date-sequence">
+            {% for date in date_sequence %}
+            <a href="?date={{ date|date:'Y-m-d' }}" class="date-box {% if date == selected_date %}active{% endif %}">
+                <div class="day">{{ date|date:"D" }}</div>
+                <div class="number">{{ date|date:"d" }}</div>
+                <div class="month">{{ date|date:"M" }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
     <div class="goal-form">
         <h2>Add New Goal</h2>
         <form id="goalForm" method="POST">
@@ -188,6 +301,18 @@
         <li class="goal-item {% if goal.is_completed %}goal-item__completed{% endif %}"
         data-goal-id="{{ goal.id }}">
             <div class="goal-title">{{ goal.title }}</div>
+            <div class="snooze-container">
+                <button class="snooze-btn">Snooze ⏰</button>
+                <div class="snooze-options">
+                    <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
+                        {% csrf_token %}
+                        <button type="submit" name="days" value="1">1 Day</button>
+                        <button type="submit" name="days" value="7">1 Week</button>
+                        <button type="submit" name="days" value="14">2 Weeks</button>
+                        <button type="submit" name="days" value="30">1 Month</button>
+                    </form>
+                </div>
+            </div>
             <div class="goal-meta">
                 <p>{{ goal.description }}</p>
                 Created: {{ goal.created_at|date:"M d, Y" }}
@@ -242,6 +367,48 @@
             allowInput: false,
             defaultDate: 'today',
         });
+    </script>
+    <script>
+        // Auto-scroll to active date
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeDate = document.querySelector('.date-box.active');
+            if (activeDate) {
+                activeDate.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        });
+
+        // Add hover effect
+        document.querySelectorAll('.date-box').forEach(box => {
+            box.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+
+            box.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.snooze-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const options = this.nextElementSibling;
+            options.style.display = options.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+
+    // Close snooze options when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.snooze-container')) {
+            document.querySelectorAll('.snooze-options').forEach(options => {
+                options.style.display = 'none';
+            });
+        }
+    });
     </script>
 </footer>
 </html>
