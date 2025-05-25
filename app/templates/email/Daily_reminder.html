@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Your Daily Tasks Reminder ⏰</h2>
+    <p>Here are your pending tasks for {{ date|date:"F j, Y" }}:</p>
+
+    <ul>
+    {% for goal in tasks %}
+        <li>
+            <strong>{{ goal.title }}</strong>
+            {% if goal.due_date %}
+            - Due: {{ goal.due_date|date:"M j" }}
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>No pending tasks today! 🎉</li>
+    {% endfor %}
+    </ul>
+
+    <p>View all tasks: {{ site_url }}</p>
+</body>
+</html>

@@ -9,4 +9,5 @@ urlpatterns = [
     path('toggle-goal/<int:goal_id>', views.toggle_goal_status, name="toggle-goal-status"),
     path('delete-goal/<int:goal_id>/', views.delete_goal, name="delete-goal"),
     path('sonooze-goal/<int:goal_id>', views.snooze_goal, name="snooze-goal"),
+    path('reminders/', views.reminder_settings, name='reminder-settings'),
 ]

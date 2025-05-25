@@ -1,7 +1,8 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
-from .forms import GoalForm
-from .models import Goal
+from .forms import GoalForm, ReminderForm
+from .models import Goal, UserReminder
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
@@ -91,3 +92,17 @@ def snooze_goal(request, goal_id):
     goal.save()
 
     return redirect('core:goal-list')
+
+
+@login_required
+def reminder_settings(request):
+    """for setting up the reminder or setting of the reminder"""
+    instance, created = UserReminder.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        form = ReminderForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect('core:reminder-settings')
+    else:
+        form = ReminderForm(instance=instance)
+    return render(request, 'core/reminder_settings.html', {'form': form})

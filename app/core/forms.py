@@ -1,5 +1,5 @@
-from django.forms import ModelForm, DateInput, TextInput, Textarea
-from .models import Goal
+from django.forms import ModelForm, DateInput, TextInput, Textarea, TimeInput
+from .models import Goal, UserReminder
 
 
 class GoalForm(ModelForm):
@@ -19,4 +19,14 @@ class GoalForm(ModelForm):
                 'autocomplete': 'off',
                 'rows': 3,
             })
+        }
+
+
+class ReminderForm(ModelForm):
+    """for creating a reminder"""
+    class Meta:
+        model = UserReminder
+        fields = ['reminder_time', 'active']
+        widgets = {
+            'reminder_time': TimeInput(attrs={'type': 'time'}),
         }

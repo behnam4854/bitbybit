@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro-Goals Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .goal-list {
+            list-style: none;
+            padding: 0;
+        }
+        .goal-item {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .goal-item__completed {
+            border-left-color: #2ecc71;
+            opacity: 0.7;
+        }
+        .goal-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .goal-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .due-date {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .status {
+            float: right;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        .status__completed {
+            background: #2ecc71;
+            color: white;
+        }
+        .status__pending {
+            background: #f39c12;
+            color: white;
+        }
+        .status-group{
+            background: lightgray;
+            font-weight: bolder;
+            margin-right: .5rem;
+        }
+
+        /*goal form*/
+        .goal-form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+            .form-group {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    /* Target all form controls */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100% !important;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+        display: block;
+    }
+
+    /* Specific fix for date input wrapper */
+    .flatpickr-wrapper {
+        width: 100%;
+    }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .submit-btn:hover {
+            background: #2980b9;
+        }
+
+        .errorlist {
+            color: #e74c3c;
+            margin: 5px 0 0 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.9em;
+        }
+        .btn{
+            text-decoration: none;
+            padding: .3rem .5rem;
+            border-radius: .3rem;
+            margin-top: .5rem;
+            font-size: 0.8rem;
+        }
+        .btn-delete{
+            color: white;
+            background: darkred;
+        }
+        /*data bar*/
+            .date-scroll-container {
+        overflow-x: auto;
+        padding: 20px 0;
+        margin-bottom: 30px;
+    }
+
+    .date-sequence {
+        display: flex;
+        gap: 15px;
+        min-width: max-content;
+    }
+
+    .date-box {
+        text-align: center;
+        padding: 15px 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+        min-width: 70px;
+    }
+
+    .date-box.active {
+        background: #3498db;
+        color: white;
+    }
+
+    .date-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .day {
+        font-size: 0.9em;
+        text-transform: uppercase;
+    }
+
+    .number {
+        font-size: 1.4em;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .month {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .date-box.active .month {
+        color: #e0e0e0;
+    }
+    /*date snoozer*/
+
+    .snooze-container {
+        position: relative;
+        display: inline-block;
+        margin-left: 15px;
+    }
+
+    .snooze-btn {
+        background: #f1c40f;
+        color: #2c3e50;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .snooze-options {
+        display: none;
+        position: absolute;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        padding: 10px;
+        z-index: 100;
+        top: 100%;
+        left: 0;
+    }
+
+    .snooze-options button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .snooze-options button:hover {
+        background: #3498db;
+        color: white;
+    }
+
+    .snooze-container:hover .snooze-options {
+        display: block;
+    }
+    /*extra*/
+        .reminder-settings {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    input[type="time"] {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .btn {
+        background: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    </style>
+</head>
+<body>
+    <div class="reminder-settings">
+        <h2>Daily Reminder Settings</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.reminder_time.label_tag }}
+                {{ form.reminder_time }}
+            </div>
+            <div class="form-group">
+                {{ form.active.label_tag }}
+                {{ form.active }}
+            </div>
+            <button type="submit" class="btn">Save Settings</button>
+        </form>
+    </div>
+</body>
+<footer>
+    <script>
+        document.querySelectorAll('.goal-item').forEach(item=>{
+            item.addEventListener('click',function(){
+                const goal_id = this.getAttribute('data-goal-id');
+                fetch(`/toggle-goal/${goal_id}`,{
+                    method: 'POST',
+                    headers :{
+                        'X-CSRFToken' : '{{ csrf_token }}',
+                        'Content-Type' : 'application/json',
+                    },
+                }).then(response =>response.json()).then(data=>{
+                    if (data.success){
+
+                    this.classList.toggle('goal-item__completed', data.is_completed);
+
+                    // Update status span
+                    const statusSpan = this.querySelector('.status');
+                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
+                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
+                }
+                });
+            });
+        });
+    </script>
+    <script>
+        // Initialize time picker
+        flatpickr("input[type='time']", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        });
+    </script>
+    <script>
+        // Auto-scroll to active date
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeDate = document.querySelector('.date-box.active');
+            if (activeDate) {
+                activeDate.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        });
+
+        // Add hover effect
+        document.querySelectorAll('.date-box').forEach(box => {
+            box.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+
+            box.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.snooze-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const options = this.nextElementSibling;
+            options.style.display = options.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+
+    // Close snooze options when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.snooze-container')) {
+            document.querySelectorAll('.snooze-options').forEach(options => {
+                options.style.display = 'none';
+            });
+        }
+    });
+    </script>
+</footer>
+</html>
