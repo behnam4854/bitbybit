@@ -24,6 +24,10 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'my-task': {
         'task': 'core.tasks.send_daily_reminders',
-        'schedule': timedelta(minutes=1),
+        'schedule': timedelta(minutes=15),
     },
+    'task-2': {
+        'task': "core.tasks.send_priority_tasks",
+        'schedule': timedelta(minutes=60),
+    }
 }

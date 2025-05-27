@@ -7,4 +7,4 @@ from .models import *
 admin.site.register(Goal)
 admin.site.register(TaskGroup)
 admin.site.register(UserReminder)
-
+admin.site.register(UserProfile)

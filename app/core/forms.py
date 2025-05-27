@@ -7,7 +7,7 @@ class GoalForm(ModelForm):
 
     class Meta:
         model = Goal
-        fields = '__all__'
+        fields = ['title', "goal_group", 'description', 'due_date']
         widgets = {
             'due_date': DateInput(attrs={
                 'type': 'date',
@@ -20,7 +20,6 @@ class GoalForm(ModelForm):
                 'rows': 3,
             })
         }
-
 
 class ReminderForm(ModelForm):
     """for creating a reminder"""

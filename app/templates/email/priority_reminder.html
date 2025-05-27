@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>📌 Your Priority Tasks Need Attention!</h2>
+    <p>Hi {{ user.username }}, these important tasks are waiting for your magic touch:</p>
+
+    <ul>
+    {% for goal in overdue_tasks %}
+        <li>
+            <strong>{{ goal.title }}</strong>
+            - Due {{ goal.due_date|timesince }} ago
+            <a href="#">Mark Complete</a>
+        </li>
+    {% endfor %}
+    </ul>
+
+    <p>You've got this! 💪<br>
+    <small>"Productivity is never an accident. It's always the result of commitment to excellence." - Paul Meyer</small></p>
+</body>
+</html>

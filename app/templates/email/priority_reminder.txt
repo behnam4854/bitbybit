@@ -1,0 +1,16 @@
+Priority Task Reminder
+======================
+
+Hello {{ user.username }},
+
+You have {{ task_count }} priority task(s) needing attention:
+
+{% for task in tasks %}
+- {{ task.title }} (Due: {{ task.due_date|date:"M d, Y" }})
+{% endfor %}
+
+View your tasks: {{ site_url }}
+
+---
+You received this email because you enabled priority reminders.
+Unsubscribe here: {{ unsubscribe_url }}

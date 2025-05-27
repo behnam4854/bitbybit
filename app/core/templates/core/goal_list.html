@@ -303,6 +303,7 @@
             <div class="goal-title">{{ goal.title }}</div>
             <div class="snooze-container">
                 <button class="snooze-btn">Snooze ⏰</button>
+                <p>snoozed times : {{ goal.snoozed_times }}</p>
                 <div class="snooze-options">
                     <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
                         {% csrf_token %}
