@@ -1,0 +1,131 @@
+{% extends "account/base_dashboard.html" %}
+
+{% block title %}Dashboard - BitByBit{% endblock %}
+
+{% block content %}
+    <div id="dashboard-page" class="page-content active">
+    <div class="header">
+        <h2>Dashboard Overview</h2>
+        <div class="user-info">
+            <div class="avatar">JD</div>
+            <div class="user-details">
+                <div class="name">John Doe</div>
+                <div class="email">john.doe@example.com</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3>Your Progress</h3>
+        </div>
+        <div class="section-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-tasks fa-2x"></i>
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Total Goals</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle fa-2x" style="color: var(--success);"></i>
+                    <div class="stat-value" style="color: var(--success);">18</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock fa-2x" style="color: var(--warning);"></i>
+                    <div class="stat-value" style="color: var(--warning);">4</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--danger);"></i>
+                    <div class="stat-value" style="color: var(--danger);">2</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3>Recent Activity</h3>
+        </div>
+        <div class="section-content">
+            <ul class="activity-list">
+                <li class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Completed "Design Wireframes"</div>
+                        <div class="activity-time">Today, 10:45 AM</div>
+                    </div>
+                </li>
+                <li class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Added "Client Meeting" goal</div>
+                        <div class="activity-time">Today, 9:30 AM</div>
+                    </div>
+                </li>
+                <li class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Set reminder for "Project Deadline"</div>
+                        <div class="activity-time">Yesterday, 7:15 PM</div>
+                    </div>
+                </li>
+                <li class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Shared "Team Goals" group</div>
+                        <div class="activity-time">May 22, 2025</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Goals Summary -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3>Goals Summary</h3>
+        </div>
+        <div class="section-content">
+            <div class="progress-container">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Personal Goals</span>
+                    <span>8/10</span>
+                </div>
+                <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                    <div style="height: 100%; width: 80%; background: var(--success);"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin: 20px 0 10px;">
+                    <span>Work Projects</span>
+                    <span>6/12</span>
+                </div>
+                <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                    <div style="height: 100%; width: 50%; background: var(--primary);"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin: 20px 0 10px;">
+                    <span>Learning Goals</span>
+                    <span>4/6</span>
+                </div>
+                <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                    <div style="height: 100%; width: 67%; background: var(--warning);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

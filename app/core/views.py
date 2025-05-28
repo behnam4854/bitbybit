@@ -65,6 +65,7 @@ class GoalListView(ListView):
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
+        print(form.data)
         if form.is_valid():
             # Create but don't save yet
             goal = form.save(commit=False)

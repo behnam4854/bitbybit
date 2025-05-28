@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro-Goals Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .goal-list {
+            list-style: none;
+            padding: 0;
+        }
+        .goal-item {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .goal-item__completed {
+            border-left-color: #2ecc71;
+            opacity: 0.7;
+        }
+        .goal-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .goal-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .due-date {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .status {
+            float: right;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        .status__completed {
+            background: #2ecc71;
+            color: white;
+        }
+        .status__pending {
+            background: #f39c12;
+            color: white;
+        }
+        .status-group{
+            background: lightgray;
+            font-weight: bolder;
+            margin-right: .5rem;
+        }
+
+        /*goal form*/
+        .goal-form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+            .form-group {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    /* Target all form controls */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100% !important;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+        display: block;
+    }
+
+    /* Specific fix for date input wrapper */
+    .flatpickr-wrapper {
+        width: 100%;
+    }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .submit-btn:hover {
+            background: #2980b9;
+        }
+
+        .errorlist {
+            color: #e74c3c;
+            margin: 5px 0 0 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.9em;
+        }
+        .btn{
+            text-decoration: none;
+            padding: .3rem .5rem;
+            border-radius: .3rem;
+            margin-top: .5rem;
+            font-size: 0.8rem;
+        }
+        .btn-delete{
+            color: white;
+            background: darkred;
+        }
+        /*data bar*/
+            .date-scroll-container {
+        overflow-x: auto;
+        padding: 20px 0;
+        margin-bottom: 30px;
+    }
+
+    .date-sequence {
+        display: flex;
+        gap: 15px;
+        min-width: max-content;
+    }
+
+    .date-box {
+        text-align: center;
+        padding: 15px 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+        min-width: 70px;
+    }
+
+    .date-box.active {
+        background: #3498db;
+        color: white;
+    }
+
+    .date-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .day {
+        font-size: 0.9em;
+        text-transform: uppercase;
+    }
+
+    .number {
+        font-size: 1.4em;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .month {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .date-box.active .month {
+        color: #e0e0e0;
+    }
+    /*date snoozer*/
+
+    .snooze-container {
+        position: relative;
+        display: inline-block;
+        margin-left: 15px;
+    }
+
+    .snooze-btn {
+        background: #f1c40f;
+        color: #2c3e50;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .snooze-options {
+        display: none;
+        position: absolute;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        padding: 10px;
+        z-index: 100;
+        top: 100%;
+        left: 0;
+    }
+
+    .snooze-options button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .snooze-options button:hover {
+        background: #3498db;
+        color: white;
+    }
+
+    .snooze-container:hover .snooze-options {
+        display: block;
+    }
+    </style>
+</head>
+<body>
+    <h1>Micro-Goals Tracker</h1>
+    <div class="date-scroll-container">
+        <div class="date-sequence">
+            {% for date in date_sequence %}
+            <a href="?date={{ date|date:'Y-m-d' }}" class="date-box {% if date == selected_date %}active{% endif %}">
+                <div class="day">{{ date|date:"D" }}</div>
+                <div class="number">{{ date|date:"d" }}</div>
+                <div class="month">{{ date|date:"M" }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="goal-form">
+        <h2>Add New Goal</h2>
+        <form id="goalForm" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.title.label_tag }}
+                {{ form.title }}
+                {{ form.title.errors }}
+            </div>
+            <div class="form-group">
+                {{ form.goal_group.label_tag }}
+                {{ form.goal_group }}
+                {{ form.goal_group.errors }}
+            </div>
+            <div class="form-group">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+            <div class="form-group">
+                {{ form.due_date.label_tag }}
+                {{ form.due_date }}
+                {{ form.due_date.errors }}
+            </div>
+            <button type="submit" class="submit-btn">Add Goal</button>
+        </form>
+    </div>
+
+    <ul class="goal-list">
+        {% for goal in goals %}
+        <li class="goal-item {% if goal.is_completed %}goal-item__completed{% endif %}"
+        data-goal-id="{{ goal.id }}">
+            <div class="goal-title">{{ goal.title }}</div>
+            <div class="snooze-container">
+                <button class="snooze-btn">Snooze ⏰</button>
+                <p>snoozed times : {{ goal.snoozed_times }}</p>
+                <div class="snooze-options">
+                    <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
+                        {% csrf_token %}
+                        <button type="submit" name="days" value="1">1 Day</button>
+                        <button type="submit" name="days" value="7">1 Week</button>
+                        <button type="submit" name="days" value="14">2 Weeks</button>
+                        <button type="submit" name="days" value="30">1 Month</button>
+                    </form>
+                </div>
+            </div>
+            <div class="goal-meta">
+                <p>{{ goal.description }}</p>
+                Created: {{ goal.created_at|date:"M d, Y" }}
+                {% if goal.due_date %}
+                    | Due: <span class="due-date">{{ goal.due_date|date:"M d, Y" }}</span>
+                {% endif %}
+            </div>
+            <span class="status {% if goal.is_completed %}status__completed{% else %}status__pending{% endif %}">
+                {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
+            </span>
+            <span class="status status-group">
+                {{ goal.goal_group }}
+            </span>
+            <a class="btn-delete btn" href="{% url 'core:delete-goal' goal_id=goal.id %}">delete</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+<footer>
+    <script>
+        document.querySelectorAll('.goal-item').forEach(item=>{
+            item.addEventListener('click',function(){
+                const goal_id = this.getAttribute('data-goal-id');
+                fetch(`/toggle-goal/${goal_id}`,{
+                    method: 'POST',
+                    headers :{
+                        'X-CSRFToken' : '{{ csrf_token }}',
+                        'Content-Type' : 'application/json',
+                    },
+                }).then(response =>response.json()).then(data=>{
+                    if (data.success){
+
+                    this.classList.toggle('goal-item__completed', data.is_completed);
+
+                    // Update status span
+                    const statusSpan = this.querySelector('.status');
+                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
+                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
+                }
+                });
+            });
+        });
+    </script>
+    <script>
+    // Initialize flatpickr
+        flatpickr('#id_due_date', {
+            dateFormat: "Y-m-d",
+            static: true,
+            monthSelectorType: 'static',
+            minDate: "today",
+            disableMobile: "true",
+            allowInput: false,
+            defaultDate: 'today',
+        });
+    </script>
+    <script>
+        // Auto-scroll to active date
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeDate = document.querySelector('.date-box.active');
+            if (activeDate) {
+                activeDate.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        });
+
+        // Add hover effect
+        document.querySelectorAll('.date-box').forEach(box => {
+            box.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+
+            box.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.snooze-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const options = this.nextElementSibling;
+            options.style.display = options.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+
+    // Close snooze options when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.snooze-container')) {
+            document.querySelectorAll('.snooze-options').forEach(options => {
+                options.style.display = 'none';
+            });
+        }
+    });
+    </script>
+</footer>
+</html>

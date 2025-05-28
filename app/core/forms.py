@@ -1,4 +1,4 @@
-from django.forms import ModelForm, DateInput, TextInput, Textarea, TimeInput
+from django.forms import ModelForm, DateInput, TextInput, Textarea, TimeInput, Select
 from .models import Goal, UserReminder
 
 
@@ -12,12 +12,22 @@ class GoalForm(ModelForm):
             'due_date': DateInput(attrs={
                 'type': 'date',
                 'autocomplete': 'off',
-                'readonly': 'readonly',
+                'class': 'form-control',
             }),
             'description': Textarea(attrs={
                 'type': 'text',
                 'autocomplete': 'off',
                 'rows': 3,
+                'class': 'form-control',
+                'placeholder': "Enter goal description",
+            }),
+            'title': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': "Enter goal title",
+            }),
+            'goal_group': Select(attrs={
+                'class': 'form-control',
+                'placeholder': "Please select",
             })
         }
 

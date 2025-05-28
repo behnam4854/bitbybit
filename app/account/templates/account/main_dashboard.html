@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BitByBit - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #f9f9f9;
+            --dark: #333;
+            --gray: #e0e0e0;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Mobile-First Container */
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 100vw;
+            overflow: hidden;
+        }
+        .sidebar{
+            display: none;
+        }
+        /* Mobile Header */
+        .mobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--secondary);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .logo-mobile {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            height: 100%;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 200;
+            transition: var(--transition);
+            overflow-y: auto;
+        }
+
+        .mobile-nav.active {
+            left: 0;
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--secondary);
+            color: white;
+        }
+
+        .close-nav {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .mobile-nav-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .mobile-nav-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--dark);
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .mobile-nav-menu li a:hover,
+        .mobile-nav-menu li a.active {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .mobile-nav-menu i {
+            margin-right: 15px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px 15px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        .header h2 {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-details {
+            line-height: 1.4;
+        }
+
+        .user-details .name {
+            font-weight: 600;
+        }
+
+        .user-details .email {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .section-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+
+        .section-content {
+            padding: 15px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--secondary);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* Overlay for mobile nav */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Page Content */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* Tablet Styles */
+        @media (min-width: 576px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 992px) {
+            .dashboard-container {
+                flex-direction: row;
+            }
+
+
+            .mobile-header, .overlay, .mobile-nav {
+                display: none;
+            }
+
+            /* Desktop Sidebar */
+            .sidebar {
+                width: 250px;
+                background: var(--secondary);
+                color: white;
+                padding: 20px 0;
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+                display: block;
+            }
+
+            .logo {
+                text-align: center;
+                padding: 20px 0;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 20px;
+            }
+
+            .logo h1 {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+
+            .sidebar-menu {
+                list-style: none;
+                padding: 0 20px;
+            }
+
+            .sidebar-menu li {
+                margin-bottom: 5px;
+            }
+
+            .sidebar-menu a {
+                display: flex;
+                align-items: center;
+                padding: 12px 15px;
+                color: rgba(255,255,255,0.8);
+                text-decoration: none;
+                border-radius: 6px;
+                transition: var(--transition);
+            }
+
+            .sidebar-menu a:hover,
+            .sidebar-menu a.active {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .sidebar-menu i {
+                margin-right: 10px;
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+            }
+
+            .main-content {
+                flex: 1;
+                padding: 30px;
+                max-width: calc(100% - 250px);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-mobile">BitByBit</div>
+            <div class="user-info">
+                <div class="avatar">JD</div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="overlay" id="overlay"></div>
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="logo-mobile">BitByBit</div>
+                <button class="close-nav" id="closeNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="mobile-nav-menu">
+                <li><a href="#" class="nav-link active" data-page="dashboard-page"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#" class="nav-link" data-page="profile-page"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+                <li><a href="#" class="nav-link" data-page="goals-page"><i class="fas fa-tasks"></i> <span>Goals</span></a></li>
+                <li><a href="#" class="nav-link" data-page="groups-page"><i class="fas fa-layer-group"></i> <span>Goal Groups</span></a></li>
+                <li><a href="#" class="nav-link" data-page="reminders-page"><i class="fas fa-bell"></i> <span>Reminders</span></a></li>
+                <li><a href="#" class="nav-link" data-page="security-page"><i class="fas fa-shield-alt"></i> <span>Security</span></a></li>
+                <li><a href="#"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Desktop Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>BitByBit</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="nav-link active" data-page="dashboard-page"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#" class="nav-link" data-page="profile-page"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+                <li><a href="#" class="nav-link" data-page="goals-page"><i class="fas fa-tasks"></i> <span>Goals</span></a></li>
+                <li><a href="#" class="nav-link" data-page="groups-page"><i class="fas fa-layer-group"></i> <span>Goal Groups</span></a></li>
+                <li><a href="#" class="nav-link" data-page="reminders-page"><i class="fas fa-bell"></i> <span>Reminders</span></a></li>
+                <li><a href="#" class="nav-link" data-page="security-page"><i class="fas fa-shield-alt"></i> <span>Security</span></a></li>
+                <li><a href="#"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content active">
+                <div class="header">
+                    <h2>Dashboard Overview</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Your Progress</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fas fa-tasks fa-2x"></i>
+                                <div class="stat-value">24</div>
+                                <div class="stat-label">Total Goals</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-check-circle fa-2x" style="color: var(--success);"></i>
+                                <div class="stat-value" style="color: var(--success);">18</div>
+                                <div class="stat-label">Completed</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-clock fa-2x" style="color: var(--warning);"></i>
+                                <div class="stat-value" style="color: var(--warning);">4</div>
+                                <div class="stat-label">In Progress</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--danger);"></i>
+                                <div class="stat-value" style="color: var(--danger);">2</div>
+                                <div class="stat-label">Overdue</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div class="section-content">
+                        <ul class="activity-list">
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Completed "Design Wireframes"</div>
+                                    <div class="activity-time">Today, 10:45 AM</div>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Added "Client Meeting" goal</div>
+                                    <div class="activity-time">Today, 9:30 AM</div>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Set reminder for "Project Deadline"</div>
+                                    <div class="activity-time">Yesterday, 7:15 PM</div>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-share-alt"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Shared "Team Goals" group</div>
+                                    <div class="activity-time">May 22, 2025</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Goals Summary -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Goals Summary</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="progress-container">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Personal Goals</span>
+                                <span>8/10</span>
+                            </div>
+                            <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                                <div style="height: 100%; width: 80%; background: var(--success);"></div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; margin: 20px 0 10px;">
+                                <span>Work Projects</span>
+                                <span>6/12</span>
+                            </div>
+                            <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                                <div style="height: 100%; width: 50%; background: var(--primary);"></div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; margin: 20px 0 10px;">
+                                <span>Learning Goals</span>
+                                <span>4/6</span>
+                            </div>
+                            <div style="height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;">
+                                <div style="height: 100%; width: 67%; background: var(--warning);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profile-page" class="page-content">
+                <div class="header">
+                    <h2>Profile Settings</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Personal Information</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" class="form-control" value="John">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" class="form-control" value="Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="form-control" value="john.doe@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" class="form-control" value="+1 (555) 123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label>Timezone</label>
+                            <select class="form-control">
+                                <option selected>(GMT-05:00) Eastern Time</option>
+                                <option>(GMT-08:00) Pacific Time</option>
+                                <option>(GMT-07:00) Mountain Time</option>
+                                <option>(GMT-06:00) Central Time</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-block">Update Information</button>
+                    </div>
+                </div>
+
+                <!-- Account Security Section -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Account Security</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Password</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="password" class="form-control" value="••••••••" disabled>
+                                <button class="btn btn-danger">Change</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Two-Factor Authentication</label>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div>Status: <strong>Enabled</strong></div>
+                                    <small>Adds an extra layer of security</small>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Login History</label>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                                <div style="margin-bottom: 10px;">
+                                    <div><strong>Today</strong> at 10:30 AM</div>
+                                    <div>Chrome, Windows</div>
+                                </div>
+                                <div>
+                                    <div><strong>Yesterday</strong> at 8:15 PM</div>
+                                    <div>Safari, iPhone</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Photo -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Profile Photo</h3>
+                    </div>
+                    <div class="section-content" style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 120px; height: 120px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                            <i class="fas fa-user fa-3x" style="color: #999;"></i>
+                        </div>
+                        <button class="btn" style="margin-bottom: 10px;">Upload New Photo</button>
+                        <button class="btn btn-danger">Remove Photo</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder for other pages -->
+            <div id="goals-page" class="page-content">
+                <div class="header">
+                    <h2>Goals Management</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Your Goals</h3>
+                        <button class="btn">Add Goal</button>
+                    </div>
+                    <div class="section-content">
+                        <p>Goals management page content will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="groups-page" class="page-content">
+                <div class="header">
+                    <h2>Goal Groups</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Your Groups</h3>
+                        <button class="btn">Create Group</button>
+                    </div>
+                    <div class="section-content">
+                        <p>Goal groups management page content will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reminders-page" class="page-content">
+                <div class="header">
+                    <h2>Reminder Settings</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Notification Preferences</h3>
+                    </div>
+                    <div class="section-content">
+                        <p>Reminder settings page content will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="security-page" class="page-content">
+                <div class="header">
+                    <h2>Security Settings</h2>
+                    <div class="user-info">
+                        <div class="avatar">JD</div>
+                        <div class="user-details">
+                            <div class="name">John Doe</div>
+                            <div class="email">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3>Security Preferences</h3>
+                    </div>
+                    <div class="section-content">
+                        <p>Security settings page content will appear here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile Navigation Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const closeNav = document.getElementById('closeNav');
+        const mobileNav = document.getElementById('mobileNav');
+        const overlay = document.getElementById('overlay');
+
+        menuToggle.addEventListener('click', () => {
+            mobileNav.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        closeNav.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        overlay.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        // Page Navigation
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page-content');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Get target page
+                const targetPage = this.getAttribute('data-page');
+
+                // Update active navigation
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show target page
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById(targetPage).classList.add('active');
+
+                // Close mobile nav if open
+                if(mobileNav.classList.contains('active')) {
+                    mobileNav.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
