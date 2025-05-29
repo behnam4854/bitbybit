@@ -679,13 +679,9 @@
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="login.html" class="auth-btn login-btn">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>Login</span>
-            </a>
-            <a href="signup.html" class="auth-btn signup-btn">
+            <a href="{% url 'account:login' %}" class="auth-btn signup-btn">
                 <i class="fas fa-user-plus"></i>
-                <span>Sign Up</span>
+                <span>SignUp/Login</span>
             </a>
         </div>
     </header>

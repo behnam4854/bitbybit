@@ -6,7 +6,7 @@ from django.db import models
 
 # Create your models here.
 
-
+# todo which user created this task group
 class TaskGroup(models.Model):
     """for grouping the task, for example the work and personal stuff"""
     title = models.CharField(max_length=256)
