@@ -95,12 +95,12 @@ def signup_view(request):
     """sign up view"""
     form = SignUpForm()
     if request.method == "POST":
-        form = LoginForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
-            name = form.cleaned_data['signup-name']
-            email = form.cleaned_data['signup-email']
-            password = form.cleaned_data['signup-password']
-            confirm_password = form.cleaned_data['signup-confirm']
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            confirm_password = form.cleaned_data['confirm_password']
             if password == confirm_password:
                 user = User.objects.create_user(
                     email=email,
@@ -126,6 +126,7 @@ def signup_view(request):
             else:
                 messages.error(request, "Passwords does not match")
         else:
+            print("Form errors:", form.errors)
             messages.error(request, "Form is invalid")
     return render(request, "account/login.html", {"form": form})
 
