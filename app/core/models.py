@@ -1,8 +1,7 @@
 from datetime import timezone
 
-from django.contrib.auth.models import User
 from django.db import models
-
+from django.conf import settings
 
 # Create your models here.
 
@@ -17,7 +16,7 @@ class TaskGroup(models.Model):
 
 class Goal(models.Model):
     """for every micro-goal in this app"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     goal_group = models.ForeignKey(TaskGroup, on_delete=models.CASCADE)
     title = models.CharField(max_length=256)
     description = models.TextField(null=True, blank=True)
@@ -37,7 +36,7 @@ class Goal(models.Model):
 
 class UserReminder(models.Model):
     """reminder model for all the undone task for today"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     reminder_time = models.TimeField(null=True, blank=True)
     active = models.BooleanField(default=True)
     last_sent = models.DateTimeField(null=True, blank=True)
@@ -48,7 +47,7 @@ class UserReminder(models.Model):
 
 class UserProfile(models.Model):
     """simple user profile"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     mobile = models.IntegerField(max_length=11)
 
     def __str__(self):

@@ -4,7 +4,9 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
-from .models import UserReminder, Goal, User
+from .models import UserReminder, Goal
+from account.models import *
+
 
 
 @shared_task(queue='tasks')
@@ -63,7 +65,7 @@ def send_reminder_email(user, tasks, date):
 
 @shared_task(queue='tasks')
 def send_priority_tasks():
-    users = User.objects.all()
+    users = CustomUser.objects.all()
     for user in users:
         overdue_tasks = Goal.objects.filter(
             user= user,

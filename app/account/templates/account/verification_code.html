@@ -360,6 +360,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- App Header -->
     <header class="app-header">
@@ -391,27 +392,32 @@
                 Please enter it below to verify your account.
             </p>
 
-            <p class="email-address">user@example.com</p>
+            <!-- Display actual user email from Django context -->
+            <p class="email-address">{{ email }}</p>
 
-            <div class="verification-inputs">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" autofocus>
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric">
-            </div>
-
-            <div class="timer-container">
-                <div class="timer" id="timer">
-                    <i class="fas fa-clock"></i>
-                    <span id="time">05:00</span>
+            <!-- Add form element with hidden inputs -->
+            <form id="verificationForm" method="post" action="{% url 'account:verification_code' %}">
+                {% csrf_token %}
+                <div class="verification-inputs">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" autofocus name="digit1">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" name="digit2">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" name="digit3">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" name="digit4">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" name="digit5">
+                    <input type="text" class="code-input" maxlength="1" inputmode="numeric" name="digit6">
                 </div>
-            </div>
 
-            <button class="verify-btn" id="verifyBtn" disabled>
-                Verify Account
-            </button>
+                <div class="timer-container">
+                    <div class="timer" id="timer">
+                        <i class="fas fa-clock"></i>
+                        <span id="time">05:00</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="verify-btn" id="verifyBtn" disabled>
+                    Verify Account
+                </button>
+            </form>
 
             <a href="#" class="resend-link" id="resendLink">
                 <i class="fas fa-redo-alt"></i> Resend Code
@@ -445,6 +451,7 @@
         const timerDisplay = document.getElementById('time');
         const timerContainer = document.getElementById('timer');
         const resendLink = document.getElementById('resendLink');
+        const verificationForm = document.getElementById('verificationForm');
 
         // Timer variables
         let timeLeft = 5 * 60; // 5 minutes in seconds
@@ -508,47 +515,21 @@
             });
         });
 
-        // Verify button handler
-        verifyBtn.addEventListener('click', () => {
-            // Collect verification code
-            const code = Array.from(codeInputs).map(input => input.value).join('');
-
+        // Form submission handler
+        verificationForm.addEventListener('submit', function(e) {
+            // Don't prevent default submission - let it go to Django
             // Show loading state
             verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
             verifyBtn.disabled = true;
-
-            // Simulate verification process
-            setTimeout(() => {
-                // Success simulation
-                document.querySelector('.verification-icon').innerHTML = '<i class="fas fa-check"></i>';
-                document.querySelector('.verification-icon').style.background = 'rgba(6, 214, 160, 0.1)';
-                document.querySelector('.verification-icon').style.color = 'var(--success)';
-                document.querySelector('.verification-title').textContent = 'Email Verified!';
-                document.querySelector('.verification-subtitle').innerHTML = 'Your email has been successfully verified.<br>You can now access all features of Goal Tracker Pro.';
-
-                // Update button
-                verifyBtn.innerHTML = '<i class="fas fa-check"></i> Continue to Dashboard';
-                verifyBtn.style.background = 'var(--success)';
-                verifyBtn.addEventListener('click', () => {
-                    alert('Redirecting to dashboard...');
-                    // In a real app: window.location.href = 'dashboard.html';
-                });
-
-                // Hide timer and resend link
-                document.querySelector('.timer-container').style.display = 'none';
-                resendLink.style.display = 'none';
-
-                // Clear inputs
-                codeInputs.forEach(input => {
-                    input.disabled = true;
-                    input.style.background = 'rgba(6, 214, 160, 0.05)';
-                });
-            }, 1500);
         });
 
         // Resend code handler
         resendLink.addEventListener('click', (e) => {
             e.preventDefault();
+
+            // Show loading state
+            resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            resendLink.style.pointerEvents = 'none';
 
             // Reset timer
             clearInterval(timerInterval);
@@ -557,33 +538,45 @@
 
             // Reset UI
             timerContainer.classList.remove('expired');
-            resendLink.style.display = 'none';
 
-            // Show notification
-            const notification = document.createElement('div');
-            notification.textContent = 'New verification code sent to your email!';
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--success);
-                color: white;
-                padding: 12px 25px;
-                border-radius: 8px;
-                font-weight: 500;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                z-index: 1000;
-                animation: fadeInOut 3s ease-in-out;
-            `;
+            // Submit the resend request
+            fetch(resendLink.href, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // Show notification
+                    const notification = document.createElement('div');
+                    notification.textContent = 'New verification code sent to your email!';
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: var(--success);
+                        color: white;
+                        padding: 12px 25px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        animation: fadeInOut 3s ease-in-out;
+                    `;
 
-            document.body.appendChild(notification);
+                    document.body.appendChild(notification);
 
-            // Remove notification after animation
-            setTimeout(() => {
-                notification.style.animation = 'fadeOut 0.5s ease forwards';
-                setTimeout(() => notification.remove(), 500);
-            }, 2500);
+                    // Remove notification after animation
+                    setTimeout(() => {
+                        notification.style.animation = 'fadeOut 0.5s ease forwards';
+                        setTimeout(() => notification.remove(), 500);
+                    }, 2500);
+                }
+            }).finally(() => {
+                resendLink.innerHTML = '<i class="fas fa-redo-alt"></i> Resend Code';
+                resendLink.style.pointerEvents = 'auto';
+            });
         });
 
         // Start the timer when page loads
