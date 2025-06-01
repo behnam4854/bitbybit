@@ -1,15 +1,236 @@
 {% extends "account/base_dashboard.html" %}
-
+{% block head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+{% endblock %}
 {% block title %}Dashboard - BitByBit{% endblock %}
 
 {% block content %}
-    <div class="dashboard-section">
-        <div class="section-header">
-            <h3>Your Groups</h3>
-            <button class="btn">Create Group</button>
+    <div class="container">
+        <!-- Date Navigation -->
+        <div class="date-nav-container">
+            <div class="date-scroll-container">
+                <div class="date-sequence">
+                    {% for date in date_sequence %}
+                    <a href="?date={{ date|date:'Y-m-d' }}" class="date-box {% if date == selected_date %}active{% endif %}">
+                        <div class="day">{{ date|date:"D" }}</div>
+                        <div class="number">{{ date|date:"d" }}</div>
+                        <div class="month">{{ date|date:"M" }}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-        <div class="section-content">
-            <p>Goal groups management page content will appear here.</p>
+
+        <!-- Goal Form -->
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h2 class="form-title">Create New Goal</h2>
+            </div>
+            <form id="goalForm" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="goalTitle">Goal Title</label>
+                    {{ form.title }}
+                </div>
+                <div class="form-group">
+                    <label for="goalGroup">Goal Group</label>
+                    {{ form.goal_group }}
+                </div>
+                <div class="form-group">
+                    <label for="goalDescription">Description</label>
+                    {{ form.description }}
+                </div>
+                <div class="form-group">
+                    <label for="dueDate">Due Date</label>
+                    {{ form.due_date }}
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-plus-circle"></i> Add Goal
+                </button>
+            </form>
+
+        </div>
+
+        <!-- Goals List -->
+        <div class="goals-container">
+            <div class="goals-header">
+                <div class="goals-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h2 class="goals-title">Your Goals</h2>
+            </div>
+            <ul class="goal-list">
+                {% for goal in goals %}
+                    <li class="goal-item {% if goal.is_completed %}goal-item__completed{% endif %}" data-goal-id="{{ goal.id }}">
+                        <div class="goal-header">
+                            <div class="goal-title">{{ goal.title }}</div>
+                            <span class="status {% if goal.is_completed %}status__completed{% else %}status__pending{% endif %}">
+                                {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="goal-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-file-alt meta-icon"></i>
+                                <span>{{ goal.description }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt meta-icon"></i>
+                                <span>Created: <span>{{ goal.created_at|date:"M d, Y" }}</span></span>
+                            </div>
+                            {% if goal.due_date %}
+                            <div class="meta-item">
+                                <i class="fas fa-clock meta-icon"></i>
+                                <span>Due: <span class="due-date">{{ goal.due_date|date:"M d, Y" }}</span></span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="goal-footer">
+                            <div class="goal-tags">
+                                <span class="tag group-tag">
+                                    <i class="fas fa-layer-group"></i> {{ goal.goal_group }}
+                                </span>
+                                <span class="tag snooze-tag">
+                                    <i class="fas fa-clock"></i> Snoozed: {{ goal.snoozed_times }} times
+                                </span>
+                            </div>
+
+                            <div class="goal-actions">
+                                <div class="snooze-container">
+                                    <button class="action-btn snooze-btn">
+                                        <i class="fas fa-clock"></i>
+                                    </button>
+                                        <div class="snooze-options">
+                                            <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
+                                            {% csrf_token %}
+                                            <div class="snooze-title">Snooze For</div>
+                                            <div class="snooze-grid">
+                                                    <button class="snooze-option" type="submit" name="days" value="1">1 Day</button>
+                                                    <button class="snooze-option" type="submit" name="days" value="3">3 Days</button>
+                                                    <button class="snooze-option" type="submit" name="days" value="7">1 Week</button>
+                                                    <button class="snooze-option" type="submit" name="days" value="14">2 Weeks</button>
+                                            </div>
+                                            </form>
+                                        </div>
+                                </div>
+
+                                <a class="action-btn delete-btn" href="{% url 'core:delete-goal' goal_id=goal.id %}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
+
+{% endblock %}
+{% block footer %}
+        <script>
+        document.querySelectorAll('.goal-item').forEach(item=>{
+            item.addEventListener('click',function(){
+                const goal_id = this.getAttribute('data-goal-id');
+                fetch(`/toggle-goal/${goal_id}`,{
+                    method: 'POST',
+                    headers :{
+                        'X-CSRFToken' : '{{ csrf_token }}',
+                        'Content-Type' : 'application/json',
+                    },
+                }).then(response =>response.json()).then(data=>{
+                    if (data.success){
+
+                    this.classList.toggle('goal-item__completed', data.is_completed);
+
+                    // Update status span
+                    const statusSpan = this.querySelector('.status');
+                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
+                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
+                }
+                });
+            });
+        });
+    </script>
+    <script>
+        // Initialize flatpickr after DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr('#id_due_date', {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                defaultDate: "today",
+                disableMobile: true,
+                static: true
+            });
+
+            // Auto-scroll to active date
+            const activeDate = document.querySelector('.date-box.active');
+            if (activeDate) {
+                activeDate.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        });
+
+    </script>
+    <script>
+        // Set up snooze functionality
+        document.querySelectorAll('.snooze-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const options = this.nextElementSibling;
+
+                // Close other open snooze options
+                document.querySelectorAll('.snooze-options').forEach(opt => {
+                    if (opt !== options) opt.classList.remove('active');
+                });
+
+                // Toggle current options
+                if (options) {
+                    options.classList.toggle('active');
+                }
+            });
+        });
+
+        // Close snooze options when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.snooze-container')) {
+                document.querySelectorAll('.snooze-options').forEach(options => {
+                    options.classList.remove('active');
+                });
+            }
+        });
+
+        // Toggle goal completion
+        document.querySelectorAll('.goal-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Don't trigger if clicking on actions
+                if (e.target.closest('.goal-actions') || e.target.tagName === 'BUTTON') {
+                    return;
+                }
+
+                // Toggle completed state
+                this.classList.toggle('goal-item__completed');
+
+                // Update status
+                const statusSpan = this.querySelector('.status');
+                if (this.classList.contains('goal-item__completed')) {
+                    statusSpan.textContent = 'Completed';
+                    statusSpan.className = 'status status__completed';
+                } else {
+                    statusSpan.textContent = 'Pending';
+                    statusSpan.className = 'status status__pending';
+                }
+            });
+        });
+
+    </script>
+
+
 {% endblock %}

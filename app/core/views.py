@@ -23,7 +23,7 @@ class GoalListView(ListView):
     context_object_name = 'goals'
     ordering = ['-created_at', 'is_completed']
     form_class = GoalForm
-    template_name = 'core/goal_list.html'
+    template_name = 'account/goals.html'
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -138,7 +138,7 @@ def reminder_settings(request):
         form = ReminderForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
-            return redirect('core:reminder-settings')
+            return redirect('account:dashboard')
     else:
         form = ReminderForm(instance=instance)
     return render(request, 'core/reminder_settings.html', {'form': form})

@@ -14,7 +14,7 @@ import time
 from django.conf import settings
 from django.contrib import messages
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 
 User = get_user_model()
 
@@ -42,7 +42,7 @@ def dashboard(request):
     total_tasks = Goal.objects.filter(user=request.user).count()
     completed_tasks = Goal.objects.filter(is_completed=True, user=request.user).count()
     in_progress_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__lte=datetime.now()).count()
-    over_due_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__gte=datetime.now()).count()
+    over_due_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__lt=datetime.now()).count()
     return render(request, "account/home_dashboard.html", {"completed_tasks": completed_tasks,
                                                            "total_tasks": total_tasks,
                                                            "in_progress_tasks": in_progress_tasks,
@@ -176,7 +176,15 @@ def verification(request):
 
 def profile(request):
     """simple test dashboard"""
-    return render(request, "account/profile.html")
+    if request.method =="POST":
+        form = UserProfile(request.POST, instance=request.user)
+        if form.is_valid:
+            # todo if the user wants to change email, we should verify that
+            form.save()
+            return redirect("account:profile")
+    else:
+        form = UserProfile(instance=request.user)
+    return render(request, "account/profile.html", {"form": form})
 
 
 def goals(request):
@@ -187,3 +195,9 @@ def goals(request):
 def goal_groups(request):
     """simple test dashboard"""
     return render(request, "account/goal_groups.html")
+
+
+def logout_view(request):
+    """for logging out the user"""
+    logout(request)
+    return redirect("account:login")

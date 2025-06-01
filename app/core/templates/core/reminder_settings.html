@@ -1,82 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Micro-Goals Tracker</title>
+{% extends "account/base_dashboard.html" %}
+{% block head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        .goal-list {
-            list-style: none;
-            padding: 0;
-        }
-        .goal-item {
-            background: #f9f9f9;
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #3498db;
-        }
-
-        .goal-item__completed {
-            border-left-color: #2ecc71;
-            opacity: 0.7;
-        }
-        .goal-title {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-        .goal-meta {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .due-date {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        .status {
-            float: right;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 0.8em;
-        }
-        .status__completed {
-            background: #2ecc71;
-            color: white;
-        }
-        .status__pending {
-            background: #f39c12;
-            color: white;
-        }
-        .status-group{
-            background: lightgray;
-            font-weight: bolder;
-            margin-right: .5rem;
-        }
-
-        /*goal form*/
-        .goal-form {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-            .form-group {
+<style>
+    .form-group {
         width: 100%;
         margin-bottom: 15px;
     }
@@ -280,8 +207,9 @@
         cursor: pointer;
     }
     </style>
-</head>
-<body>
+{% endblock %}
+{% block title %}Dashboard - BitByBit{% endblock %}
+{% block content %}
     <div class="reminder-settings">
         <h2>Daily Reminder Settings</h2>
         <form method="POST">
@@ -297,32 +225,9 @@
             <button type="submit" class="btn">Save Settings</button>
         </form>
     </div>
-</body>
+{% endblock %}
+{% block footer %}
 <footer>
-    <script>
-        document.querySelectorAll('.goal-item').forEach(item=>{
-            item.addEventListener('click',function(){
-                const goal_id = this.getAttribute('data-goal-id');
-                fetch(`/toggle-goal/${goal_id}`,{
-                    method: 'POST',
-                    headers :{
-                        'X-CSRFToken' : '{{ csrf_token }}',
-                        'Content-Type' : 'application/json',
-                    },
-                }).then(response =>response.json()).then(data=>{
-                    if (data.success){
-
-                    this.classList.toggle('goal-item__completed', data.is_completed);
-
-                    // Update status span
-                    const statusSpan = this.querySelector('.status');
-                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
-                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
-                }
-                });
-            });
-        });
-    </script>
     <script>
         // Initialize time picker
         flatpickr("input[type='time']", {
@@ -375,4 +280,4 @@
     });
     </script>
 </footer>
-</html>
+{% endblock %}

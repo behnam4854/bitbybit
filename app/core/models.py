@@ -42,7 +42,7 @@ class UserReminder(models.Model):
     last_sent = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.reminder_time}"
+        return f"{self.user.email} - {self.reminder_time}"
 
 
 class UserProfile(models.Model):
