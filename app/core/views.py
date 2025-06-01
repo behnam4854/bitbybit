@@ -5,9 +5,8 @@ from .forms import GoalForm, ReminderForm
 from .models import Goal, UserReminder
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse
 from .forms import GoalForm
-from django.urls import reverse
 from django.views.decorators.http import require_POST
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -122,7 +121,7 @@ def snooze_goal(request, goal_id):
     goal = get_object_or_404(Goal, pk=goal_id)
     days = int(request.POST.get('days', 1))
 
-    new_date = timezone.now().date() + timezone.timedelta(days=days)
+    new_date = goal.due_date + timezone.timedelta(days=days)
     goal.due_date = new_date
     goal.snoozed_times += 1
     goal.save()

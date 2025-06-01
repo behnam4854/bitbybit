@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib import messages
 
 from django.contrib.auth import get_user_model, logout
-
+from .utils import create_default_groups_for_user
 User = get_user_model()
 
 
@@ -24,9 +24,7 @@ def dashboard(request):
     """simple test dashboard"""
 
     goal_groups = []
-    # groups = TaskGroup.objects.filter(user=request.user)
-    # todo refactor the code to the currect one that filter user after editing the model
-    groups = TaskGroup.objects.all()
+    groups = TaskGroup.objects.filter(user=request.user)
 
     for group in groups:
         total_goals = group.goal_set.count()
@@ -119,7 +117,7 @@ def signup_view(request):
                     [email],
                     fail_silently=False,
                 )
-
+                create_default_groups_for_user(user)
                 request.session['verification_user_id'] = user.id
                 messages.success(request, 'Account created! Please verify your email')
                 return redirect("account:verification_code")
