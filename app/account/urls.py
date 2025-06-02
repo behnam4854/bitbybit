@@ -14,4 +14,5 @@ urlpatterns = [
     path('verification/', views.verification, name="verification_code"),
     path('goal-gruops/', views.goal_groups, name="goal_groups"),
 
+
 ]

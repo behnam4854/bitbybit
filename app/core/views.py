@@ -12,12 +12,16 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib import messages
 
+from django.views.decorators.csrf import csrf_exempt
+import json
+import logging
 
-# Create your views here.
+logger = logging.getLogger(__name__)
+
 
 
 class GoalListView(ListView):
-    """simple view to displaying the Goal"""
+    """Simple view to display Goals"""
     model = Goal
     context_object_name = 'goals'
     ordering = ['-created_at', 'is_completed']
@@ -26,20 +30,24 @@ class GoalListView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        # Filter goals by logged-in user
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(user=self.request.user)
+        else:
+            queryset = queryset.none()  # No goals for unauthenticated users
         selected_date = self.request.GET.get('date')
 
         if selected_date:
             try:
                 parsed_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-                return queryset.filter(due_date__gte=parsed_date)
+                queryset = queryset.filter(due_date__gte=parsed_date)
             except ValueError:
                 pass
+        logger.debug(f"Goal queryset for user {self.request.user}: {queryset}")
         return queryset
 
     def get_context_data(self, **kwargs):
-        # First call the base implementation to get the context
         context = super().get_context_data(**kwargs)
-
         today = timezone.now().date()
 
         # Generate date sequence
@@ -54,47 +62,65 @@ class GoalListView(ListView):
         except ValueError:
             selected_date = today
 
+        # Pass user to form
+        form = self.form_class(user=self.request.user) if self.request.user.is_authenticated else self.form_class()
         context.update({
-            'form': self.form_class(),
+            'form': form,
             'date_sequence': date_sequence,
             'selected_date': selected_date,
             'today': today
         })
+        logger.debug(f"Context for user {self.request.user}: form with goal_group queryset {form.fields['goal_group'].queryset}")
         return context
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        print(form.data)
+        form = self.form_class(user=request.user, data=request.POST) if request.user.is_authenticated else self.form_class(data=request.POST)
+        logger.debug(f"Form data: {form.data}")
         if form.is_valid():
-            # Create but don't save yet
             goal = form.save(commit=False)
-            # Associate with logged-in user
             if request.user.is_authenticated:
                 goal.user = request.user
                 goal.save()
+                logger.debug(f"Created goal: {goal.title} for user: {request.user}")
                 messages.success(request, "Goal created successfully!")
                 return redirect(self.request.path)
             else:
-                print("3")
+                logger.warning("Unauthenticated user attempted to create goal")
                 messages.error(request, "You must be logged in to create goals")
                 return redirect('login')
 
-        # Handle invalid form
         self.object_list = self.get_queryset()
         context = self.get_context_data()
         context['form'] = form
 
-        # Add form errors to messages
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(request, f"{field.title()}: {error}")
-
         return self.render_to_response(context)
+
+
+@csrf_exempt
+@login_required
+def update_progress(request, goal_id):
+    if request.method == 'POST':
+        print("test is done")
+        goal = get_object_or_404(Goal, id=goal_id, user=request.user)
+        data = json.loads(request.body)
+        current_value = float(data.get('current_value', 0))
+        goal.current_value = current_value
+        if goal.current_value >= goal.target_value:
+            goal.is_completed = True
+        goal.save()
+        return JsonResponse({'success': True, 'progress': goal.progress,'current_value':current_value, 'target_value':goal.target_value})
+    return JsonResponse({'success': False}, status=400)
+
 
 def toggle_goal_status(request, goal_id):
     """for toggling the status of the goal if existed"""
     if request.method == "POST":
         goal = get_object_or_404(Goal, pk=goal_id)
+        if goal.target_value and goal.current_value < goal.target_value:
+            return JsonResponse({'success': False})
         goal.is_completed = not goal.is_completed
         goal.save()
 

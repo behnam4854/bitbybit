@@ -20,11 +20,17 @@ class TaskGroup(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.title}-{self.user.email}"
+        return f"{self.title}"
 
 
 class Goal(models.Model):
     """for every micro-goal in this app"""
+    RECURRENCE_CHOICES = [
+        ('NONE', 'None'),
+        ('DAILY', 'Daily'),
+        ('WEEKLY', 'Weekly'),
+        ('MONTHLY', 'Monthly'),
+    ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     goal_group = models.ForeignKey(TaskGroup, on_delete=models.CASCADE)
     title = models.CharField(max_length=256)
@@ -33,6 +39,16 @@ class Goal(models.Model):
     created_at = models.DateField(auto_now_add=True)
     due_date = models.DateField(blank=True, null=True)
     snoozed_times = models.IntegerField(default=0)
+    target_value = models.FloatField(blank=True, null=True)
+    current_value = models.FloatField(default=0)
+    priority = models.IntegerField(default=1)
+    recurrence = models.CharField(max_length=20, choices=RECURRENCE_CHOICES, default='NONE')
+
+    @property
+    def progress(self):
+        if self.target_value and self.target_value > 0:
+            return min((self.current_value / self.target_value * 100), 100)
+        return 0.0
 
     @property
     def is_overdue(self):
@@ -40,7 +56,7 @@ class Goal(models.Model):
 
     def __str__(self):
         """string representation for the model"""
-        return self.title
+        return f"{self.title} - {self.user.email}"
 
 
 class UserReminder(models.Model):
@@ -57,7 +73,7 @@ class UserReminder(models.Model):
 class UserProfile(models.Model):
     """simple user profile"""
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    mobile = models.IntegerField(max_length=11)
+    mobile = models.IntegerField()
 
     def __str__(self):
         return f"{self.user.username} - {self.mobile}"

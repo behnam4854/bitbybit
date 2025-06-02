@@ -2,6 +2,92 @@
 {% block head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        /* Progress Bar */
+.progress-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease-in-out;
+}
+
+.goal-item__completed .progress-bar {
+    background-color: #2196F3; /* Blue for completed goals */
+}
+
+/* Progress Input */
+.progress-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.progress-input label {
+    font-size: 14px;
+    color: #333;
+}
+
+.progress-input input[type="number"] {
+    width: 80px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.update-progress-btn {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.update-progress-btn:hover {
+    background-color: #45a049;
+}
+
+/* Adjust goal-meta for progress */
+.goal-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 5px 0;
+}
+
+.goal-meta .meta-icon {
+    color: #666;
+}
+
+/* Ensure responsiveness */
+@media (max-width: 600px) {
+    .progress-input {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .progress-input input[type="number"] {
+        width: 100%;
+    }
+
+    .update-progress-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+    </style>
 {% endblock %}
 {% block title %}Dashboard - BitByBit{% endblock %}
 
@@ -48,11 +134,14 @@
                     <label for="dueDate">Due Date</label>
                     {{ form.due_date }}
                 </div>
+                <div class="form-group">
+                    <label for="targetValue">Target Value (e.g., 50 for 50 miles)</label>
+                    {{ form.target_value }}
+                </div>
                 <button type="submit" class="submit-btn">
                     <i class="fas fa-plus-circle"></i> Add Goal
                 </button>
             </form>
-
         </div>
 
         <!-- Goals List -->
@@ -88,7 +177,29 @@
                                 <span>Due: <span class="due-date">{{ goal.due_date|date:"M d, Y" }}</span></span>
                             </div>
                             {% endif %}
+                            {% if goal.target_value %}
+                            <div class="meta-item meta-item--1">
+                                <i class="fas fa-chart-line meta-icon"></i>
+                                <span>Progress: <span>{{goal.current_value|floatformat:0}}/{{goal.target_value|floatformat:0}}({{ goal.progress|floatformat:1 }}%)</span></span>
+                            </div>
+                            {% endif %}
                         </div>
+
+                        <!-- Progress Bar -->
+                        {% if goal.target_value %}
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ goal.progress|floatformat:1 }}%;"></div>
+                        </div>
+                        <div class="progress-input">
+                            <form method="POST" action="{% url 'core:update-progress' goal.id %}">
+                                {% csrf_token %}
+                                <label for="currentValue-{{ goal.id }}">Current Value:</label>
+                                <input type="number" class="form-control" name="current_value"
+                                       id="currentValue-{{ goal.id }}" value="{{ goal.current_value }}" min="0" step="1" />
+                                <button type="submit" class="update-progress-btn">Update</button>
+                            </form>
+                        </div>
+                        {% endif %}
 
                         <div class="goal-footer">
                             <div class="goal-tags">
@@ -105,18 +216,18 @@
                                     <button class="action-btn snooze-btn">
                                         <i class="fas fa-clock"></i>
                                     </button>
-                                        <div class="snooze-options">
-                                            <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
+                                    <div class="snooze-options">
+                                        <form method="POST" action="{% url 'core:snooze-goal' goal.id %}">
                                             {% csrf_token %}
                                             <div class="snooze-title">Snooze For</div>
                                             <div class="snooze-grid">
-                                                    <button class="snooze-option" type="submit" name="days" value="1">1 Day</button>
-                                                    <button class="snooze-option" type="submit" name="days" value="3">3 Days</button>
-                                                    <button class="snooze-option" type="submit" name="days" value="7">1 Week</button>
-                                                    <button class="snooze-option" type="submit" name="days" value="14">2 Weeks</button>
+                                                <button class="snooze-option" type="submit" name="days" value="1">1 Day</button>
+                                                <button class="snooze-option" type="submit" name="days" value="3">3 Days</button>
+                                                <button class="snooze-option" type="submit" name="days" value="7">1 Week</button>
+                                                <button class="snooze-option" type="submit" name="days" value="14">2 Weeks</button>
                                             </div>
-                                            </form>
-                                        </div>
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <a class="action-btn delete-btn" href="{% url 'core:delete-goal' goal_id=goal.id %}">
@@ -129,33 +240,9 @@
             </ul>
         </div>
     </div>
-
 {% endblock %}
+
 {% block footer %}
-        <script>
-        document.querySelectorAll('.goal-item').forEach(item=>{
-            item.addEventListener('click',function(){
-                const goal_id = this.getAttribute('data-goal-id');
-                fetch(`/toggle-goal/${goal_id}`,{
-                    method: 'POST',
-                    headers :{
-                        'X-CSRFToken' : '{{ csrf_token }}',
-                        'Content-Type' : 'application/json',
-                    },
-                }).then(response =>response.json()).then(data=>{
-                    if (data.success){
-
-                    this.classList.toggle('goal-item__completed', data.is_completed);
-
-                    // Update status span
-                    const statusSpan = this.querySelector('.status');
-                    statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
-                    statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
-                }
-                });
-            });
-        });
-    </script>
     <script>
         // Initialize flatpickr after DOM loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -178,20 +265,14 @@
             }
         });
 
-    </script>
-    <script>
         // Set up snooze functionality
         document.querySelectorAll('.snooze-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const options = this.nextElementSibling;
-
-                // Close other open snooze options
                 document.querySelectorAll('.snooze-options').forEach(opt => {
                     if (opt !== options) opt.classList.remove('active');
                 });
-
-                // Toggle current options
                 if (options) {
                     options.classList.toggle('active');
                 }
@@ -207,30 +288,76 @@
             }
         });
 
-        // Toggle goal completion
+        // Toggle goal completion only if progress is 100%
         document.querySelectorAll('.goal-item').forEach(item => {
             item.addEventListener('click', function(e) {
-                // Don't trigger if clicking on actions
-                if (e.target.closest('.goal-actions') || e.target.tagName === 'BUTTON') {
+                if (e.target.closest('.goal-actions') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
                     return;
                 }
 
-                // Toggle completed state
-                this.classList.toggle('goal-item__completed');
+                const goal_id = this.getAttribute('data-goal-id');
+                const progress = parseFloat(this.getAttribute('data-progress'));
 
-                // Update status
-                const statusSpan = this.querySelector('.status');
-                if (this.classList.contains('goal-item__completed')) {
-                    statusSpan.textContent = 'Completed';
-                    statusSpan.className = 'status status__completed';
-                } else {
-                    statusSpan.textContent = 'Pending';
-                    statusSpan.className = 'status status__pending';
+                if (progress < 100) {
+                    alert('Goal cannot be marked as completed until progress reaches 100%. Update the current value to continue.');
+                    return;
                 }
+
+                fetch(`/toggle-goal/${goal_id}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                }).then(response => response.json()).then(data => {
+                    if (data.success) {
+                        this.classList.toggle('goal-item__completed', data.is_completed);
+                        const statusSpan = this.querySelector('.status');
+                        statusSpan.className = 'status ' + (data.is_completed ? 'status__completed' : 'status__pending');
+                        statusSpan.textContent = data.is_completed ? 'Completed' : 'Pending';
+                    } else {
+                        alert(data.message || 'Cannot toggle completion.');
+                    }
+                });
             });
         });
 
+        // Handle progress update form submission
+        document.querySelectorAll('.progress-input form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const goal_id = this.closest('.goal-item').getAttribute('data-goal-id');
+                const current_value = parseFloat(this.querySelector('input[name="current_value"]').value);
+
+                fetch(`/update-progress/${goal_id}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ current_value: current_value })
+                }).then(response => response.json()).then(data => {
+                    if (data.success) {
+                        const progressBar = this.closest('.goal-item').querySelector('.progress-bar');
+                        const progressText = this.closest('.goal-item').querySelector('.meta-item--1 span span');
+                        const goalItem = this.closest('.goal-item');
+                        progressBar.style.width = `${data.progress}%`;
+                        progressText.textContent = `${data.current_value}/${data.target_value}(${data.progress.toFixed(0)}%)`;
+                        goalItem.setAttribute('data-progress', data.progress);
+                        if (data.is_completed) {
+                            goalItem.classList.add('goal-item__completed');
+                            const statusSpan = goalItem.querySelector('.status');
+                            statusSpan.className = 'status status__completed';
+                            statusSpan.textContent = 'Completed';
+                        }
+                    } else {
+                        alert(data.message || 'Failed to update progress.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating progress.');
+                });
+            });
+        });
     </script>
-
-
 {% endblock %}
