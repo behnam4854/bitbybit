@@ -1,4 +1,4 @@
-from django.forms import ModelForm, DateInput, TextInput, Textarea, TimeInput, Select, NumberInput
+from django.forms import ModelForm, DateInput, TextInput, Textarea, TimeInput, Select, NumberInput, BooleanField
 from .models import Goal, UserReminder, TaskGroup
 import logging
 from django import forms
@@ -11,7 +11,7 @@ class GoalForm(ModelForm):
 
     class Meta:
         model = Goal
-        fields = ['title', 'goal_group', 'description', 'due_date', 'target_value']
+        fields = ['title', 'goal_group', 'description', 'due_date', 'target_value', 'is_recurring', 'recurrence']
         widgets = {
             'target_value': NumberInput(attrs={
                 'min': '0',
@@ -37,7 +37,11 @@ class GoalForm(ModelForm):
             'goal_group': Select(attrs={
                 'class': 'form-control',
                 'placeholder': "Please select",
-            })
+            }),
+            'recurrence': Select(attrs={
+                'class': 'form-control',
+                'placeholder': "Please select",
+            }),
         }
 
     def __init__(self, *args, **kwargs):

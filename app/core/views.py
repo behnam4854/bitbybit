@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from .forms import GoalForm, ReminderForm
-from .models import Goal, UserReminder
+from .models import Goal, UserReminder, GoalInstance
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -83,6 +83,9 @@ class GoalListView(ListView):
                 goal.save()
                 logger.debug(f"Created goal: {goal.title} for user: {request.user}")
                 messages.success(request, "Goal created successfully!")
+                if goal.is_recurring:
+                    GoalInstance.objects.create(goal=goal)
+                    messages.success(request, "Goal Instance created successfully!")
                 return redirect(self.request.path)
             else:
                 logger.warning("Unauthenticated user attempted to create goal")
@@ -103,15 +106,25 @@ class GoalListView(ListView):
 @login_required
 def update_progress(request, goal_id):
     if request.method == 'POST':
-        print("test is done")
         goal = get_object_or_404(Goal, id=goal_id, user=request.user)
         data = json.loads(request.body)
         current_value = float(data.get('current_value', 0))
         goal.current_value = current_value
         if goal.current_value >= goal.target_value:
             goal.is_completed = True
+            goal.current_value = goal.target_value
+            goal.save()
+            return JsonResponse({
+                'success': True,
+                'progress': goal.progress,
+                'current_value': goal.current_value,
+                'target_value': goal.target_value,
+                'is_completed': goal.is_completed
+            })
         goal.save()
-        return JsonResponse({'success': True, 'progress': goal.progress,'current_value':current_value, 'target_value':goal.target_value})
+        return JsonResponse({'success': True, 'progress': goal.progress,
+                             'current_value': current_value,
+                             'target_value': goal.target_value})
     return JsonResponse({'success': False}, status=400)
 
 
@@ -145,6 +158,8 @@ def delete_goal(request, goal_id):
 @require_POST
 def snooze_goal(request, goal_id):
     goal = get_object_or_404(Goal, pk=goal_id)
+    if goal.is_completed:
+        return redirect('core:goal-list')
     days = int(request.POST.get('days', 1))
 
     new_date = goal.due_date + timezone.timedelta(days=days)

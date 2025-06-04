@@ -43,6 +43,8 @@ class Goal(models.Model):
     current_value = models.FloatField(default=0)
     priority = models.IntegerField(default=1)
     recurrence = models.CharField(max_length=20, choices=RECURRENCE_CHOICES, default='NONE')
+    recurrence_end = models.DateField(blank=True, null=True)
+    is_recurring = models.BooleanField(default=False)
 
     @property
     def progress(self):
@@ -57,6 +59,17 @@ class Goal(models.Model):
     def __str__(self):
         """string representation for the model"""
         return f"{self.title} - {self.user.email}"
+
+
+class GoalInstance(models.Model):
+    """for recurring type of goal and managing it"""
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE)
+    instance_date = models.DateField(auto_now_add=True)
+    current_value = models.FloatField(default=0)
+    is_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.goal} - {self.instance_date}"
 
 
 class UserReminder(models.Model):

@@ -119,23 +119,33 @@
             <form id="goalForm" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="goalTitle">Goal Title</label>
+                    <label for="id_title">Goal Title</label>
                     {{ form.title }}
                 </div>
                 <div class="form-group">
-                    <label for="goalGroup">Goal Group</label>
+                    <label for="id_goal_group">Goal Group</label>
                     {{ form.goal_group }}
                 </div>
                 <div class="form-group">
-                    <label for="goalDescription">Description</label>
+                    <label for="id_description">Description</label>
                     {{ form.description }}
                 </div>
                 <div class="form-group">
-                    <label for="dueDate">Due Date</label>
+                    <label for="id_due_date">Due Date</label>
                     {{ form.due_date }}
                 </div>
                 <div class="form-group">
-                    <label for="targetValue">Target Value (e.g., 50 for 50 miles)</label>
+                    <label for="id_is_recurring">Is Recurring</label>
+                    {{ form.is_recurring }}
+                </div>
+                <div class="recurrence-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="id_recurrence">Recurrence</label>
+                        {{ form.recurrence }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="id_target_value">Target Value (e.g., 8 for 8 glasses, leave blank for sub-tasks)</label>
                     {{ form.target_value }}
                 </div>
                 <button type="submit" class="submit-btn">
@@ -360,4 +370,29 @@
             });
         });
     </script>
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const isRecurringCheckbox = document.getElementById('id_is_recurring');
+        const recurrenceFields = document.querySelector('.recurrence-fields');
+
+        // Initial state
+        recurrenceFields.style.display = isRecurringCheckbox.checked ? 'block' : 'none';
+
+        // Toggle recurrence fields on checkbox change
+        isRecurringCheckbox.addEventListener('change', function() {
+            recurrenceFields.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                // Clear recurrence fields when unchecked
+                const recurrenceInputs = recurrenceFields.querySelectorAll('input, select');
+                recurrenceInputs.forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+            }
+        });
+        });
+</script>
 {% endblock %}
