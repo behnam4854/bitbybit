@@ -16,6 +16,7 @@ from django.contrib import messages
 
 from django.contrib.auth import get_user_model, logout
 from .utils import create_default_groups_for_user
+
 User = get_user_model()
 
 
@@ -39,7 +40,7 @@ def dashboard(request):
 
     total_tasks = Goal.objects.filter(user=request.user).count()
     completed_tasks = Goal.objects.filter(is_completed=True, user=request.user).count()
-    in_progress_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__lte=datetime.now()).count()
+    in_progress_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__gte=datetime.now()).count()
     over_due_tasks = Goal.objects.filter(is_completed=False, user=request.user, due_date__lt=datetime.now()).count()
     return render(request, "account/home_dashboard.html", {"completed_tasks": completed_tasks,
                                                            "total_tasks": total_tasks,
@@ -174,7 +175,7 @@ def verification(request):
 
 def profile(request):
     """simple test dashboard"""
-    if request.method =="POST":
+    if request.method == "POST":
         form = UserProfile(request.POST, instance=request.user)
         if form.is_valid:
             # todo if the user wants to change email, we should verify that

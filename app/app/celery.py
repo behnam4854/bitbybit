@@ -29,5 +29,9 @@ app.conf.beat_schedule = {
     'task-2': {
         'task': "core.tasks.send_priority_tasks",
         'schedule': timedelta(minutes=60),
+    },
+    'task-recurring': {
+        'task': "core.tasks.manual_recurring_task_creation",
+        'schedule': timedelta(minutes=2),
     }
 }

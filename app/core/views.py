@@ -11,13 +11,13 @@ from django.views.decorators.http import require_POST
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib import messages
+from .tasks import recurring_task_creation
 
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 
 class GoalListView(ListView):
@@ -27,6 +27,10 @@ class GoalListView(ListView):
     ordering = ['-created_at', 'is_completed']
     form_class = GoalForm
     template_name = 'account/goals.html'
+
+    # todo i want a way to combine two query in list view,
+    # for now  i solve this problem by showing the task that are before today and for today, maybe later i change the
+    # query and listView
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -40,7 +44,7 @@ class GoalListView(ListView):
         if selected_date:
             try:
                 parsed_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-                queryset = queryset.filter(due_date__gte=parsed_date)
+                queryset = queryset.filter(due_date__lte=parsed_date)
             except ValueError:
                 pass
         logger.debug(f"Goal queryset for user {self.request.user}: {queryset}")
@@ -70,22 +74,25 @@ class GoalListView(ListView):
             'selected_date': selected_date,
             'today': today
         })
-        logger.debug(f"Context for user {self.request.user}: form with goal_group queryset {form.fields['goal_group'].queryset}")
+        logger.debug(
+            f"Context for user {self.request.user}: form with goal_group queryset {form.fields['goal_group'].queryset}")
         return context
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(user=request.user, data=request.POST) if request.user.is_authenticated else self.form_class(data=request.POST)
+        form = self.form_class(user=request.user,
+                               data=request.POST) if request.user.is_authenticated else self.form_class(
+            data=request.POST)
         logger.debug(f"Form data: {form.data}")
         if form.is_valid():
             goal = form.save(commit=False)
             if request.user.is_authenticated:
                 goal.user = request.user
+                if goal.is_recurring:
+                    goal.next_occurrence = datetime.now()
                 goal.save()
                 logger.debug(f"Created goal: {goal.title} for user: {request.user}")
                 messages.success(request, "Goal created successfully!")
-                if goal.is_recurring:
-                    GoalInstance.objects.create(goal=goal)
-                    messages.success(request, "Goal Instance created successfully!")
+
                 return redirect(self.request.path)
             else:
                 logger.warning("Unauthenticated user attempted to create goal")

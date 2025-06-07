@@ -45,6 +45,7 @@ class Goal(models.Model):
     recurrence = models.CharField(max_length=20, choices=RECURRENCE_CHOICES, default='NONE')
     recurrence_end = models.DateField(blank=True, null=True)
     is_recurring = models.BooleanField(default=False)
+    next_occurrence = models.DateField(blank=True, null=True)
 
     @property
     def progress(self):
@@ -64,7 +65,7 @@ class Goal(models.Model):
 class GoalInstance(models.Model):
     """for recurring type of goal and managing it"""
     goal = models.ForeignKey(Goal, on_delete=models.CASCADE)
-    instance_date = models.DateField(auto_now_add=True)
+    instance_date = models.DateField(auto_now=True)
     current_value = models.FloatField(default=0)
     is_completed = models.BooleanField(default=False)
 

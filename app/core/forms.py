@@ -11,7 +11,8 @@ class GoalForm(ModelForm):
 
     class Meta:
         model = Goal
-        fields = ['title', 'goal_group', 'description', 'due_date', 'target_value', 'is_recurring', 'recurrence']
+        fields = ['title', 'goal_group', 'description', 'due_date',
+                  'target_value', 'is_recurring', 'recurrence', 'recurrence_end']
         widgets = {
             'target_value': NumberInput(attrs={
                 'min': '0',
@@ -41,6 +42,11 @@ class GoalForm(ModelForm):
             'recurrence': Select(attrs={
                 'class': 'form-control',
                 'placeholder': "Please select",
+            }),
+            'recurrence_end': DateInput(attrs={
+                'type': 'date',
+                'autocomplete': 'off',
+                'class': 'form-control',
             }),
         }
 
