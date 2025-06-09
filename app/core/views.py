@@ -1,6 +1,6 @@
+from celery.exceptions import OperationalError
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-
 from .forms import GoalForm, ReminderForm
 from .models import Goal, UserReminder, GoalInstance
 from django.views.generic import ListView
@@ -21,43 +21,42 @@ logger = logging.getLogger(__name__)
 
 
 class GoalListView(ListView):
-    """Simple view to display Goals"""
+    """View to display recurring and non-recurring goals."""
     model = Goal
-    context_object_name = 'goals'
+    context_object_name = 'goals'  # Non-recurring goals
     ordering = ['-created_at', 'is_completed']
     form_class = GoalForm
     template_name = 'account/goals.html'
 
-    # todo i want a way to combine two query in list view,
-    # for now  i solve this problem by showing the task that are before today and for today, maybe later i change the
-    # query and listView
-
     def get_queryset(self):
+        """Return queryset for non-recurring goals."""
         queryset = super().get_queryset()
-        # Filter goals by logged-in user
         if self.request.user.is_authenticated:
-            queryset = queryset.filter(user=self.request.user)
+            queryset = queryset.filter(
+                user=self.request.user,
+                is_recurring=False
+            )
         else:
-            queryset = queryset.none()  # No goals for unauthenticated users
+            queryset = queryset.none()
         selected_date = self.request.GET.get('date')
-
         if selected_date:
             try:
                 parsed_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-                queryset = queryset.filter(due_date__lte=parsed_date)
+                queryset = queryset.filter(due_date=parsed_date)
             except ValueError:
                 pass
-        logger.debug(f"Goal queryset for user {self.request.user}: {queryset}")
+        logger.debug(f"Non-recurring goal queryset for user {self.request.user}: {queryset}")
         return queryset
 
     def get_context_data(self, **kwargs):
+        """Add recurring goal instances and other context."""
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
 
         # Generate date sequence
-        date_sequence = [today + timedelta(days=i) for i in range(-3, 4)]
+        date_sequence = [today + timedelta(days=i) for i in range(-3, 10)]
 
-        # Handle date parsing safely
+        # Parse selected date
         try:
             selected_date = datetime.strptime(
                 self.request.GET.get('date', today.isoformat()),
@@ -66,19 +65,29 @@ class GoalListView(ListView):
         except ValueError:
             selected_date = today
 
-        # Pass user to form
+        # Get recurring goal instances
+        recurring_instances = GoalInstance.objects.none()
+        if self.request.user.is_authenticated:
+            recurring_instances = GoalInstance.objects.filter(
+                goal__user=self.request.user,
+                goal__is_recurring=True,
+                instance_date=selected_date
+            ).select_related('goal').order_by('goal__created_at')
+
+        # Initialize form with user
         form = self.form_class(user=self.request.user) if self.request.user.is_authenticated else self.form_class()
         context.update({
             'form': form,
+            'recurring_instances': recurring_instances,
             'date_sequence': date_sequence,
             'selected_date': selected_date,
             'today': today
         })
-        logger.debug(
-            f"Context for user {self.request.user}: form with goal_group queryset {form.fields['goal_group'].queryset}")
+        logger.debug(f"Context for user {self.request.user}: {len(recurring_instances)} recurring instances")
         return context
 
     def post(self, request, *args, **kwargs):
+        """Handle goal creation."""
         form = self.form_class(user=request.user,
                                data=request.POST) if request.user.is_authenticated else self.form_class(
             data=request.POST)
@@ -87,12 +96,18 @@ class GoalListView(ListView):
             goal = form.save(commit=False)
             if request.user.is_authenticated:
                 goal.user = request.user
-                if goal.is_recurring:
-                    goal.next_occurrence = datetime.now()
+                goal.next_occurrence = datetime.now().date()
                 goal.save()
-                logger.debug(f"Created goal: {goal.title} for user: {request.user}")
+                logger.info(f"Created goal: {goal.title} (ID: {goal.id}) for user: {request.user}")
+                if goal.is_recurring:
+                    try:
+                        logger.debug(f"Enqueuing recurring_task_creation for goal {goal.id} using delay")
+                        task_result = recurring_task_creation.delay(goal.id)
+                        logger.debug(f"Task enqueued with ID: {task_result.id}")
+                    except OperationalError as e:
+                        logger.error(f"Failed to enqueue recurring_task_creation for goal {goal.id}: {str(e)}")
+                        messages.warning(request, "Goal created, but recurrence setup failed. Please try again later.")
                 messages.success(request, "Goal created successfully!")
-
                 return redirect(self.request.path)
             else:
                 logger.warning("Unauthenticated user attempted to create goal")
@@ -102,7 +117,6 @@ class GoalListView(ListView):
         self.object_list = self.get_queryset()
         context = self.get_context_data()
         context['form'] = form
-
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(request, f"{field.title()}: {error}")
@@ -132,6 +146,33 @@ def update_progress(request, goal_id):
         return JsonResponse({'success': True, 'progress': goal.progress,
                              'current_value': current_value,
                              'target_value': goal.target_value})
+    return JsonResponse({'success': False}, status=400)
+
+
+@csrf_exempt
+@login_required
+def update_recurring_progress(request, instance_id):
+    if request.method == 'POST':
+        goal_instance = GoalInstance.objects.get(id=instance_id)
+        data = json.loads(request.body)
+        current_value = float(data.get('current_value', 0))
+        goal_instance.current_value = current_value
+        goal_instance.is_completed = False
+        if goal_instance.current_value >= goal_instance.goal.target_value:
+            goal_instance.is_completed = True
+            goal_instance.current_value = goal_instance.goal.target_value
+            goal_instance.save()
+            return JsonResponse({
+                'success': True,
+                'progress': goal_instance.sub_progress,
+                'current_value': goal_instance.current_value,
+                'target_value': goal_instance.goal.target_value,
+                'is_completed': goal_instance.is_completed
+            })
+        goal_instance.save()
+        return JsonResponse({'success': True, 'progress': goal_instance.sub_progress,
+                             'current_value': current_value,
+                             'target_value': goal_instance.goal.target_value})
     return JsonResponse({'success': False}, status=400)
 
 

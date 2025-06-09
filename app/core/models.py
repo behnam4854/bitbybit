@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime
 
 from django.db import models
 from django.conf import settings
@@ -65,10 +65,15 @@ class Goal(models.Model):
 class GoalInstance(models.Model):
     """for recurring type of goal and managing it"""
     goal = models.ForeignKey(Goal, on_delete=models.CASCADE)
-    instance_date = models.DateField(auto_now=True)
+    instance_date = models.DateField(blank=True, null=True)
     current_value = models.FloatField(default=0)
     is_completed = models.BooleanField(default=False)
 
+
+    @property
+    def sub_progress(self):
+        if self.goal.target_value and self.goal.target_value>0:
+            return min((self.current_value / self.goal.target_value * 100), 100)
     def __str__(self):
         return f"{self.goal} - {self.instance_date}"
 

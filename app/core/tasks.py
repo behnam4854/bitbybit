@@ -9,6 +9,11 @@ from account.models import *
 
 from datetime import datetime, timedelta
 
+import logging
+from dateutil.rrule import rrule, DAILY, WEEKLY, MONTHLY
+
+logger = logging.getLogger(__name__)
+
 
 @shared_task(queue='tasks')
 def send_daily_reminders():
@@ -88,45 +93,88 @@ def send_priority_tasks():
 
 
 @shared_task(queue='tasks')
-def check_for_recurring_task():
-    """check for the next occurrence of a recurring task"""
-    pass
+def recurring_task_creation(goal_id):
+    """Create GoalInstance records for a recurring goal's next occurrences."""
+    try:
+        goal = Goal.objects.get(id=goal_id)
+        logger.debug(f"Processing recurring task for goal {goal.id}: {goal.title}")
+        today = timezone.now().date()
 
+        if not goal.is_recurring or goal.recurrence is None:
+            logger.debug(f"Goal {goal.id} is not recurring or has no recurrence rule.")
+            return
+
+        # Map recurrence_rule to rrule frequency and validate
+        recurrence_map = {
+            'DAILY': DAILY,
+            'WEEKLY': WEEKLY,
+            'MONTHLY': MONTHLY
+        }
+        freq = recurrence_map.get(goal.recurrence)
+        if not freq:
+            logger.error(f"Invalid recurrence rule for goal {goal.id}: {goal.recurrence_rule}")
+            return
+
+        # Determine end date
+        end_date = goal.recurrence_end if goal.recurrence_end else today + timedelta(days=365)
+        if end_date < today:
+            logger.debug(f"Recurrence ended for goal {goal.id} on {end_date}")
+            goal.is_recurring = False
+            goal.save()
+            return
+
+        # Set horizon based on recurrence type
+        if goal.recurrence == 'DAILY':
+            horizon = today + timedelta(days=7)
+        else:
+            horizon = today + timedelta(days=30)
+
+        # Calculate instance dates
+        rule = rrule(
+            freq=freq,
+            dtstart=today + timedelta(days=1),
+            until=min(end_date, horizon)
+        )
+
+        # Create GoalInstance records, avoiding duplicates
+        created_count = 0
+        for instance_date in rule:
+            instance_date = instance_date.date()
+            if not GoalInstance.objects.filter(goal=goal, instance_date=instance_date).exists():
+                GoalInstance.objects.create(
+                    goal=goal,
+                    instance_date=instance_date,
+                    current_value=0,
+                    is_completed=False
+                )
+                created_count += 1
+                logger.debug(f"Created GoalInstance for goal {goal.id} on {instance_date}")
+
+        # Update next_occurrence
+        next_horizon = horizon + timedelta(days=1)
+        next_rule = rrule(freq=freq, dtstart=next_horizon, count=1, until=end_date)
+        next_dates = list(next_rule)
+        goal.next_occurrence = next_dates[0].date() if next_dates else None
+        goal.save()
+        logger.info(f"Created {created_count} GoalInstance(s) for goal {goal.id}, next_occurrence: {goal.next_occurrence}")
+
+    except Goal.DoesNotExist:
+        logger.error(f"Goal {goal_id} does not exist.")
+    except Exception as e:
+        logger.error(f"Error in recurring_task_creation for goal {goal_id}: {str(e)}")
+        raise
 
 @shared_task(queue='tasks')
-def recurring_task_creation(goaL_id):
-    """after the recurring task is created, the next occurrence until will be created"""
-    goal = Goal.objects.get(id=goaL_id)
-    today = timezone.now().date()
-    if goal.recurrence == "Daily" and goal.recurrence_end > today:
-        if goal.recurrence_end >= today + timedelta(days=7):
-            for i in range(6):
-                GoalInstance.objects.create(goal=goal, instance_date=today + timedelta(days=i + 1))
-            goal.next_occurrence = today + timedelta(days=7)
-
-        if goal.recurrence_end < today + timedelta(days=7):
-            i = 0
-            while today + timedelta(i) <= goal.recurrence_end:
-                GoalInstance.objects.create(goal=goal, instance_date=today + timedelta(days=i + 1))
-                i += 1
-
-    if goal.recurrence == "Weekly":
-        GoalInstance.objects.create(goal=goal, instance_date=today + timedelta(days=7))
-        goal.next_occurrence = today + timedelta(days=7)
-
-    if goal.recurrence == "Monthly":
-        GoalInstance.objects.create(goal=goal, instance_date=today + timedelta(days=30))
-        goal.next_occurrence = today + timedelta(days=30)
-
-
-@shared_task(queue='tasks')
-def manual_recurring_task_creation():
-    """check the next occurrence every day and adds the next day"""
-    logger.info("Starting process_recurring_goals task (manual invocation)")
+def process_recurring_goals():
+    """Manually process recurring goals to create GoalInstance records."""
+    logger.info("Starting manual recurring goal processing")
     today = timezone.now().date()
     goals = Goal.objects.filter(
         is_recurring=True,
-        next_occurrence__lte=today
+        next_occurrence__lte=today,
+        recurrence__isnull=False
+    ).filter(
+        models.Q(recurrence_end__gte=today) | models.Q(recurrence_end__isnull=True)
     )
 
     logger.debug(f"Found {goals.count()} recurring goals to process")

@@ -31,7 +31,7 @@ app.conf.beat_schedule = {
         'schedule': timedelta(minutes=60),
     },
     'task-recurring': {
-        'task': "core.tasks.manual_recurring_task_creation",
-        'schedule': timedelta(minutes=2),
+        'task': "core.tasks.process_recurring_goals",
+        'schedule': timedelta(minutes=60),
     }
 }
