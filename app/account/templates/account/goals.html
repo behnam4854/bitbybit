@@ -87,6 +87,30 @@
         text-align: center;
     }
 }
+
+/* Updated Styles for UI Improvements */
+.date-box {
+    padding: 15px 20px;
+    min-width: 90px;
+}
+
+.date-box:hover:not(.active) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.goal-item {
+    margin-bottom: 25px;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 30px;
+}
     </style>
 {% endblock %}
 {% block title %}Dashboard - BitByBit{% endblock %}
@@ -106,57 +130,6 @@
                     {% endfor %}
                 </div>
             </div>
-        </div>
-
-        <!-- Goal Form -->
-        <div class="form-card">
-            <div class="form-header">
-                <div class="form-icon">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <h2 class="form-title">Create New Goal</h2>
-            </div>
-            <form id="goalForm" method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_title">Goal Title</label>
-                    {{ form.title }}
-                </div>
-                <div class="form-group">
-                    <label for="id_goal_group">Goal Group</label>
-                    {{ form.goal_group }}
-                </div>
-                <div class="form-group">
-                    <label for="id_description">Description</label>
-                    {{ form.description }}
-                </div>
-                <div class="form-group">
-                    <label for="id_due_date">Due Date</label>
-                    {{ form.due_date }}
-                </div>
-                <div class="form-group">
-                    <label for="id_is_recurring">Is Recurring</label>
-                    {{ form.is_recurring }}
-                </div>
-                <div class="recurrence-fields" style="display: none;">
-                    <div class="form-group">
-                        <label for="id_recurrence">Recurrence</label>
-                        {{ form.recurrence }}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_recurrence_end">Recurrence_end</label>
-                        {{ form.recurrence_end }}
-                    </div>
-
-                </div>
-                <div class="form-group">
-                    <label for="id_target_value">Target Value (e.g., 8 for 8 glasses, leave blank for sub-tasks)</label>
-                    {{ form.target_value }}
-                </div>
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-plus-circle"></i> Add Goal
-                </button>
-            </form>
         </div>
 
         <!-- Goals List -->
@@ -189,7 +162,7 @@
                             {% if instance.goal.target_value %}
                             <div class="meta-item meta-item--1">
                                 <i class="fas fa-chart-line meta-icon"></i>
-                                <span>Progress: <span>{{instance.current_value|floatformat:0}}/{{instance.goal.target_value|floatformat:0}}({{ instance.sub_progress |floatformat:1 }}%)</span></span>
+                                <span>Progress: <span class="progress-text">{{ instance.current_value|floatformat:0 }}/{{ instance.goal.target_value|floatformat:0 }} ({{ instance.sub_progress|floatformat:1 }}%)</span></span>
                             </div>
                             {% endif %}
                         </div>
@@ -202,10 +175,12 @@
                         <div class="progress-input instance-progress-input">
                             <form method="POST" action="{% url 'core:update-recurring-progress' instance.id %}">
                                 {% csrf_token %}
-                                <label for="currentValue-{{ instance.id }}">Current Value:</label>
-                                <input type="number" class="form-control" name="current_value"
-                                       id="currentValue-{{ instance.id }}" value="{{ instance.current_value }}" min="0" step="1" />
-                                <button type="submit" class="update-progress-btn">Update</button>
+                                <input type="hidden" name="current_value" id="currentValue-{{ instance.id }}" value="{{ instance.current_value }}">
+                                <div class="progress-controls">
+                                    <button type="button" class="progress-btn decrement-btn" title="Decrement" data-action="decrement" data-instance-id="{{ instance.id }}"><i class="fas fa-minus"></i></button>
+                                    <span class="current-value-display">{{ instance.current_value }}</span>
+                                    <button type="button" class="progress-btn increment-btn" title="Increment" data-action="increment" data-instance-id="{{ instance.id }}"><i class="fas fa-plus"></i></button>
+                                </div>
                             </form>
                         </div>
                         {% endif %}
@@ -218,7 +193,7 @@
                             </div>
 
                             <div class="goal-actions">
-                                <a class="action-btn delete-btn" href="#">
+                                <a class="action-btn delete-btn" href="#" title="Delete">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </div>
@@ -252,7 +227,7 @@
                             {% if goal.target_value %}
                             <div class="meta-item meta-item--1">
                                 <i class="fas fa-chart-line meta-icon"></i>
-                                <span>Progress: <span>{{goal.current_value|floatformat:0}}/{{goal.target_value|floatformat:0}}({{ goal.progress|floatformat:1 }}%)</span></span>
+                                <span>Progress: <span class="progress-text">{{ goal.current_value|floatformat:0 }}/{{ goal.target_value|floatformat:0 }} ({{ goal.progress|floatformat:1 }}%)</span></span>
                             </div>
                             {% endif %}
                         </div>
@@ -265,10 +240,12 @@
                         <div class="progress-input goal-progress-input">
                             <form method="POST" action="{% url 'core:update-progress' goal.id %}">
                                 {% csrf_token %}
-                                <label for="currentValue-{{ goal.id }}">Current Value:</label>
-                                <input type="number" class="form-control" name="current_value"
-                                       id="currentValue-{{ goal.id }}" value="{{ goal.current_value }}" min="0" step="1" />
-                                <button type="submit" class="update-progress-btn">Update</button>
+                                <input type="hidden" name="current_value" id="currentValue-{{ goal.id }}" value="{{ goal.current_value }}">
+                                <div class="progress-controls">
+                                    <button type="button" class="progress-btn decrement-btn" title="Decrement" data-action="decrement" data-goal-id="{{ goal.id }}"><i class="fas fa-minus"></i></button>
+                                    <span class="current-value-display">{{ goal.current_value }}</span>
+                                    <button type="button" class="progress-btn increment-btn" title="Increment" data-action="increment" data-goal-id="{{ goal.id }}"><i class="fas fa-plus"></i></button>
+                                </div>
                             </form>
                         </div>
                         {% endif %}
@@ -285,7 +262,7 @@
 
                             <div class="goal-actions">
                                 <div class="snooze-container">
-                                    <button class="action-btn snooze-btn">
+                                    <button class="action-btn snooze-btn" title="Snooze">
                                         <i class="fas fa-clock"></i>
                                     </button>
                                     <div class="snooze-options">
@@ -302,7 +279,7 @@
                                     </div>
                                 </div>
 
-                                <a class="action-btn delete-btn" href="{% url 'core:delete-goal' goal_id=goal.id %}">
+                                <a class="action-btn delete-btn" href="{% url 'core:delete-goal' goal_id=goal.id %}" title="Delete">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </div>
@@ -310,6 +287,62 @@
                     </li>
                 {% endfor %}
             </ul>
+        </div>
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h2 class="form-title">Create New Goal</h2>
+            </div>
+            <form id="goalForm" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_title">Goal Title</label>
+                    <input type="text" name="title" id="id_title" class="form-control" placeholder="Enter goal title" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_goal_group">Goal Group</label>
+                    <select name="goal_group" id="id_goal_group" class="form-control">
+                        {% for group in form.goal_group.field.queryset %}
+                            <option value="{{ group.id }}">{{ group.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_description">Description</label>
+                    <textarea name="description" id="id_description" class="form-control" placeholder="Describe your goal"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_due_date">Due Date</label>
+                    <input type="text" name="due_date" id="id_due_date" class="form-control" placeholder="Select due date">
+                </div>
+                <div class="form-group">
+                    <label for="id_is_recurring">Is Recurring</label>
+                    {{ form.is_recurring }}
+                </div>
+                <div class="recurrence-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="id_recurrence">Recurrence</label>
+                        <select name="recurrence" id="id_recurrence" class="form-control">
+                            {% for choice in form.recurrence.field.choices %}
+                                <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_recurrence_end">Recurrence End</label>
+                        <input type="text" name="recurrence_end" id="id_recurrence_end" class="form-control" placeholder="Select end date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="id_target_value">Target Value (e.g., 8 for 8 glasses, leave blank for sub-tasks)</label>
+                    <input type="number" name="target_value" id="id_target_value" class="form-control" placeholder="Enter target value">
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-plus-circle"></i> Add Goal
+                </button>
+            </form>
         </div>
     </div>
 {% endblock %}
@@ -368,7 +401,7 @@
                 }
 
                 const goal_id = this.getAttribute('data-goal-id');
-                const progress = parseFloat(this.getAttribute('data-progress'));
+                const progress = parseFloat(this.getAttribute('data-progress')) || 0;
 
                 if (progress < 100) {
                     alert('Goal cannot be marked as completed until progress reaches 100%. Update the current value to continue.');
@@ -394,33 +427,54 @@
             });
         });
 
-        // Handle progress update form submission
-        document.querySelectorAll('.goal-progress-input').forEach(form => {
-            form.addEventListener('submit', function(e) {
+        document.querySelectorAll('.progress-btn[data-goal-id]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const goal_id = this.closest('.goal-item').getAttribute('data-goal-id');
-                const current_value = parseFloat(this.querySelector('input[name="current_value"]').value);
+                const goalId = this.dataset.goalId;
+                const action = this.dataset.action;
+                const form = this.closest('form');
+                const input = form.querySelector('input[name="current_value"]');
+                const display = form.querySelector('.current-value-display');
+                const goalItem = this.closest('.goal-item');
+                const progressBar = goalItem.querySelector('.progress-bar');
+                const progressText = goalItem.querySelector('.meta-item--1 .progress-text');
+                let currentValue = parseFloat(input.value) || 0;
 
-                fetch(`/update-progress/${goal_id}`, {
+                if (action === 'increment') {
+                    currentValue += 1;
+                } else if (action === 'decrement' && currentValue > 0) {
+                    currentValue -= 1;
+                }
+
+                input.value = currentValue;
+                display.textContent = currentValue;
+
+                fetch(`/update-progress/${goalId}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ current_value: current_value })
+                    body: JSON.stringify({ current_value: currentValue })
                 }).then(response => response.json()).then(data => {
                     if (data.success) {
-                        const progressBar = this.closest('.goal-item').querySelector('.progress-bar');
-                        const progressText = this.closest('.goal-item').querySelector('.meta-item--1 span span');
-                        const goalItem = this.closest('.goal-item');
                         progressBar.style.width = `${data.progress}%`;
-                        progressText.textContent = `${data.current_value}/${data.target_value}(${data.progress.toFixed(0)}%)`;
+                        if (progressText) {
+                            progressText.textContent = `${data.current_value}/${data.target_value} (${(data.progress || 0).toFixed(1)}%)`;
+                        } else {
+                            console.warn('Progress text element not found for goal:', goalId);
+                        }
                         goalItem.setAttribute('data-progress', data.progress);
                         if (data.is_completed) {
                             goalItem.classList.add('goal-item__completed');
                             const statusSpan = goalItem.querySelector('.status');
                             statusSpan.className = 'status status__completed';
                             statusSpan.textContent = 'Completed';
+                        } else {
+                            goalItem.classList.remove('goal-item__completed');
+                            const statusSpan = goalItem.querySelector('.status');
+                            statusSpan.className = 'status status__pending';
+                            statusSpan.textContent = 'Pending';
                         }
                     } else {
                         alert(data.message || 'Failed to update progress.');
@@ -432,69 +486,90 @@
             });
         });
     </script>
-<script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-        const isRecurringCheckbox = document.getElementById('id_is_recurring');
-        const recurrenceFields = document.querySelector('.recurrence-fields');
+            const isRecurringCheckbox = document.getElementById('id_is_recurring');
+            const recurrenceFields = document.querySelector('.recurrence-fields');
 
-        // Initial state
-        recurrenceFields.style.display = isRecurringCheckbox.checked ? 'block' : 'none';
+            // Initial state
+            recurrenceFields.style.display = isRecurringCheckbox.checked ? 'block' : 'none';
 
-        // Toggle recurrence fields on checkbox change
-        isRecurringCheckbox.addEventListener('change', function() {
-            recurrenceFields.style.display = this.checked ? 'block' : 'none';
-            if (!this.checked) {
-                // Clear recurrence fields when unchecked
-                const recurrenceInputs = recurrenceFields.querySelectorAll('input, select');
-                recurrenceInputs.forEach(input => {
-                    if (input.type === 'checkbox' || input.type === 'radio') {
-                        input.checked = false;
-                    } else {
-                        input.value = '';
-                    }
-                });
-            }
-        });
-        });
-</script>
-<script>
-    document.querySelectorAll('.instance-progress-input').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const instance_id = this.closest('.goal-item').getAttribute('data-instance-id');
-        const current_value = parseFloat(this.querySelector('input[name="current_value"]').value);
-
-        fetch(`/update-recurring-progress/${instance_id}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ current_value: current_value })
-        }).then(response => response.json()).then(data => {
-            console.log(data)
-            if (data.success) {
-                const progressBar = this.closest('.goal-item').querySelector('.progress-bar');
-                const progressText = this.closest('.goal-item').querySelector('.meta-item--1 span span');
-                const goalItem = this.closest('.goal-item');
-                progressBar.style.width = `${data.progress}%`;
-                progressText.textContent = `${data.current_value}/${data.target_value}(${data.progress.toFixed(0)}%)`;
-                goalItem.setAttribute('data-progress', data.progress);
-                if (data.is_completed) {
-                    goalItem.classList.add('goal-item__completed');
-                    const statusSpan = goalItem.querySelector('.status');
-                    statusSpan.className = 'status status__completed';
-                    statusSpan.textContent = 'Completed';
+            // Toggle recurrence fields on checkbox change
+            isRecurringCheckbox.addEventListener('change', function() {
+                recurrenceFields.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    // Clear recurrence fields when unchecked
+                    const recurrenceInputs = recurrenceFields.querySelectorAll('input, select');
+                    recurrenceInputs.forEach(input => {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = false;
+                        } else {
+                            input.value = '';
+                        }
+                    });
                 }
-            } else {
-                alert(data.message || 'Failed to update progress.');
-            }
-        }).catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating progress.');
+            });
         });
-    });
-});
+    </script>
+    <script>
+        // Handle increment/decrement buttons for recurring instances
+        document.querySelectorAll('.progress-btn[data-instance-id]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const instanceId = this.dataset.instanceId;
+                const action = this.dataset.action;
+                const form = this.closest('form');
+                const input = form.querySelector('input[name="current_value"]');
+                const display = form.querySelector('.current-value-display');
+                const goalItem = this.closest('.goal-item');
+                const progressBar = goalItem.querySelector('.progress-bar');
+                const progressText = goalItem.querySelector('.meta-item--1 .progress-text');
+                let currentValue = parseFloat(input.value) || 0;
 
-</script>
+                if (action === 'increment') {
+                    currentValue += 1;
+                } else if (action === 'decrement' && currentValue > 0) {
+                    currentValue -= 1;
+                }
+
+                input.value = currentValue;
+                display.textContent = currentValue;
+
+                fetch(`/update-recurring-progress/${instanceId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ current_value: currentValue })
+                }).then(response => response.json()).then(data => {
+                    if (data.success) {
+                        progressBar.style.width = `${data.progress}%`;
+                        if (progressText) {
+                            progressText.textContent = `${data.current_value}/${data.target_value} (${data.progress.toFixed(1)}%)`;
+                        } else {
+                            console.warn('Progress text element not found for instance:', instanceId);
+                        }
+                        goalItem.setAttribute('data-progress', data.progress);
+                        if (data.is_completed) {
+                            goalItem.classList.add('goal-item__completed');
+                            const statusSpan = goalItem.querySelector('.status');
+                            statusSpan.className = 'status status__completed';
+                            statusSpan.textContent = 'Completed';
+                        } else {
+                            goalItem.classList.remove('goal-item__completed');
+                            const statusSpan = goalItem.querySelector('.status');
+                            statusSpan.className = 'status status__pending';
+                            statusSpan.textContent = 'Pending';
+                        }
+                    } else {
+                        alert(data.message || 'Failed to update progress.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating progress.');
+                });
+            });
+        });
+    </script>
 {% endblock %}

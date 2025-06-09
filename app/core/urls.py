@@ -11,5 +11,5 @@ urlpatterns = [
     path('update-recurring-progress/<int:instance_id>', views.update_recurring_progress, name='update-recurring-progress'),
     path('delete-goal/<int:goal_id>/', views.delete_goal, name="delete-goal"),
     path('sonooze-goal/<int:goal_id>', views.snooze_goal, name="snooze-goal"),
-    path('reminders/', views.reminder_settings, name='reminder-settings'),
+    path('reminders/', views.reminder_settings, name='reminders'),
 ]
